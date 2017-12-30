@@ -16,6 +16,8 @@ BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width", "heig
 
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
+CLOCK_MINUTE_TICK_COLOUR = (0.5,0.5,0.5,1)
+CLOCK_HOUR_TICK_COLOUR = (1,1,1,1)
 MARGIN = 10
 
 #class CairoContext(context)
@@ -37,7 +39,30 @@ class CairoComponent(object):
 
     def __init__(self, bounding_box):
 
-        self._bounding_box = bounding_box
+        self._bb = bounding_box
+
+    @staticmethod
+    def get_square_box(bounding_box):
+        """ Return largest square in the bounding box """
+        bb = bounding_box
+        box_size = min(bb.width, bb.height)
+        result = BoundingBox(
+            left=bb.left + (bb.width - box_size) / 2,
+            top=bb.top + (bb.height - box_size) / 2,
+            width=box_size,
+            height=box_size)
+        return result
+
+    @staticmethod
+    def get_margin_box(bounding_box, margin=MARGIN):
+        """ Return bounding box with margin removed. """
+        bb = bounding_box
+        result = BoundingBox(
+            left=bb.left + margin,
+            top=bb.top + margin,
+            width=bb.width - 2*margin,
+            height=bb.height - 2*margin)
+        return result
 
 class Clock(CairoComponent):
 
@@ -47,35 +72,44 @@ class Clock(CairoComponent):
     def render(self, context):
 
         with ContextRestorer(context):
-            context.set_source_rgba(*TILE_OUTLINE_COLOUR)
+
+            margin_bb = CairoComponent.get_margin_box(self._bb)
+            real_bb = CairoComponent.get_square_box(margin_bb)
+
+            #context.rectangle(real_box.left, real_box.top, real_box.width, real_box.height)
+            #context.set_source_rgba(*TILE_OUTLINE_COLOUR)
+            #context.stroke()
 
             context.translate(
-                self._bounding_box.left + self._bounding_box.width / 2,
-                self._bounding_box.top + self._bounding_box.height / 2)
+                real_bb.left + real_bb.width / 2,
+                real_bb.top + real_bb.height / 2)
 
-            for i in range(0,60,1):
+            for i in range(0,60):
                 with ContextRestorer(context):
 
                     context.rotate((i*math.pi)/30)
 
                     if (i % 5) == 0:
                         #print("a {}".format(i))
-                        context.rectangle(100,
-                                          -2,
-                                          30,
-                                          4)
+
+                        context.set_source_rgba(*CLOCK_HOUR_TICK_COLOUR)
+                        context.rectangle(-2,
+                                          real_bb.width/2-10,
+                                          4,
+                                          10)
                     else:
                         #print("b {}".format(i))
-                        context.rectangle(120,
-                                          -1,
-                                          10,
-                                          2)
+                        context.set_source_rgba(*CLOCK_MINUTE_TICK_COLOUR)
+                        context.rectangle(-0.5,
+                                          real_bb.width / 2 - 10,
+                                          0.5,
+                                          10)
                     context.fill()
 
-            #context.rectangle(self._bounding_box.left,
-            #                  self._bounding_box.top,
-            #                  self._bounding_box.width,
-            #                  self._bounding_box.height)
+            #context.rectangle(self._bb.left,
+            #                  self._bb.top,
+            #                  self._bb.width,
+            #                  self._bb.height)
 
             #context.set_source_rgba(*TILE_OUTLINE_COLOUR)
             #context.stroke()
