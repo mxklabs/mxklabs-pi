@@ -7,6 +7,7 @@
 import argparse
 import collections
 import math
+import time
 
 from tkinter import Tk, Label
 from PIL import Image, ImageTk
@@ -139,35 +140,49 @@ class ExampleGui(Tk):
 
         # Draw something
         #self.context.scale(w, h)
-        self.context.rectangle(0, 0, w, h)
-        self.context.set_source_rgba(*BACKGROUND_COLOUR)
-        self.context.fill()
-
-        self._clock = Clock(BoundingBox(left=MARGIN,
-                                        top=MARGIN,
-                                        width=w - 2*MARGIN,
-                                        height=h - 2*MARGIN))
-
-
-
-        self._clock.render(self.context)
-        #self.context.stroke()
-        #self.context.rectangle(1, 1, w-2, h-2)
-        #self.context.set_source_rgba(0, 0, 0, 1)
-        #self.context.fill()
 
         #self.context.set_source_rgba(1, 0, 0, 1)
         #self.context.move_to(90, 140)
         #self.context.rotate(-0.5)
         #self.context.set_font_size(32)
         #self.context.show_text(u'HAPPY DONUT!')
+        self.flag = True
 
-        self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
+        #self.render()
+        #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
-        self.label = Label(self, image=self._image_ref)
+        self.label = Label(self)
         self.label.pack(expand=True, fill="both")
 
-        self.mainloop()
+        while True:
+            self.update_idletasks()
+            self.update()
+            self.render()
+
+            self.flag = not self.flag
+            time.sleep(1)
+
+    def render(self):
+        print("render")
+
+        self.context.rectangle(0, 0, WIDTH, HEIGHT)
+        if self.flag:
+            self.context.set_source_rgba(*BACKGROUND_COLOUR)
+        else:
+            self.context.set_source_rgba(1,0,0,1)
+        self.context.fill()
+
+        self._clock = Clock(BoundingBox(0, 0, WIDTH, HEIGHT))
+        self._clock.render(self.context)
+
+        new_img = Image.frombuffer("RGBA", (WIDTH, HEIGHT),
+                                   self.surface.get_data(),
+                                   "raw","BGRA", 0, 1)
+        new_tk_img = ImageTk.PhotoImage(new_img)
+
+        self.label.configure(image=new_tk_img)
+        self.label.image = new_tk_img
+        #panel.image = img2
 
 
 if __name__ == "__main__":
