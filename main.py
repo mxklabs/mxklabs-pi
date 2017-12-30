@@ -4,12 +4,11 @@
 # apt-get install python3-cairo
 # pip install cairocffi
 
+import argparse
+
 from tkinter import Tk, Label
 from PIL import Image, ImageTk
 import cairocffi as cairo
-
-RUN_IN_DEV_MODE = False # If you want to run on a normal PC, not in fullscreen
-                        # and not hiding the mouse pointer, set to True.
 
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
@@ -23,10 +22,10 @@ def draw_tile(ctx, l, r, w, h):
 
 
 class ExampleGui(Tk):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, debug, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not RUN_IN_DEV_MODE:
+        if not debug:
             super().attributes("-fullscreen", True)
             super().config(cursor="none")
 
@@ -64,4 +63,14 @@ class ExampleGui(Tk):
 
 
 if __name__ == "__main__":
-    ExampleGui()
+    """
+    Using the argparse module to ease the development process of this source
+    code a little. Start this file with command-line argument '--mode debug' to
+    avoid going in fullscreen mode and to avoid hiding the cursor.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', choices=['release', 'debug'], default='release')
+
+    args = parser.parse_args()
+
+    ExampleGui(debug=(args.mode == 'debug'))
