@@ -14,10 +14,20 @@ import cairocffi as cairo
 
 BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width", "height"])
 
+WIDTH = 800
+HEIGHT = 480
+
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
-CLOCK_MINUTE_TICK_COLOUR = (0.5,0.5,0.5,1)
+
 CLOCK_HOUR_TICK_COLOUR = (1,1,1,1)
+CLOCK_HOUR_TICK_DEPTH_PC = 0.03
+CLOCK_HOUR_TICK_THICKNESS_PC = 0.01
+
+CLOCK_MINUTE_TICK_COLOUR = (0.5,0.5,0.5,1)
+CLOCK_MINUTE_TICK_DEPTH_PC = 0.01
+CLOCK_MINUTE_TICK_THICKNESS_PC = 0.01
+
 MARGIN = 10
 
 #class CairoContext(context)
@@ -86,36 +96,31 @@ class Clock(CairoComponent):
 
             for i in range(0,60):
                 with ContextRestorer(context):
-
+                    # Rotate to this tick.
                     context.rotate((i*math.pi)/30)
 
-                    if (i % 5) == 0:
-                        #print("a {}".format(i))
+                    # We draw hour ticks differently to minute ticks.
+                    is_hour_tick = (i % 5) == 0
 
-                        context.set_source_rgba(*CLOCK_HOUR_TICK_COLOUR)
-                        context.rectangle(-2,
-                                          real_bb.width/2-10,
-                                          4,
-                                          10)
+                    if is_hour_tick:
+                        tick_colour = CLOCK_HOUR_TICK_COLOUR
+                        tick_depth_pc = CLOCK_HOUR_TICK_DEPTH_PC
+                        tick_thickness_pc = CLOCK_HOUR_TICK_THICKNESS_PC
+
                     else:
-                        #print("b {}".format(i))
-                        context.set_source_rgba(*CLOCK_MINUTE_TICK_COLOUR)
-                        context.rectangle(-0.5,
-                                          real_bb.width / 2 - 10,
-                                          0.5,
-                                          10)
+                        tick_colour = CLOCK_MINUTE_TICK_COLOUR
+                        tick_depth_pc = CLOCK_MINUTE_TICK_DEPTH_PC
+                        tick_thickness_pc = CLOCK_MINUTE_TICK_THICKNESS_PC
+
+
+                    unit = real_bb.width
+
+                    context.set_source_rgba(*tick_colour)
+                    context.rectangle(-(unit*tick_thickness_pc)/2,
+                                      real_bb.width/2 - (unit * tick_depth_pc),
+                                      unit * tick_thickness_pc,
+                                      unit * tick_depth_pc)
                     context.fill()
-
-            #context.rectangle(self._bb.left,
-            #                  self._bb.top,
-            #                  self._bb.width,
-            #                  self._bb.height)
-
-            #context.set_source_rgba(*TILE_OUTLINE_COLOUR)
-            #context.stroke()
-
-
-
 
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
@@ -125,7 +130,7 @@ class ExampleGui(Tk):
             super().attributes("-fullscreen", True)
             super().config(cursor="none")
 
-        w, h = 800, 480
+        w, h = WIDTH, HEIGHT
 
         self.geometry("{}x{}".format(w, h))
 
