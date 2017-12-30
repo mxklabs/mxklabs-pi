@@ -5,20 +5,82 @@
 # pip install cairocffi
 
 import argparse
+import collections
+import math
 
 from tkinter import Tk, Label
 from PIL import Image, ImageTk
 import cairocffi as cairo
 
+BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width", "height"])
+
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
-MARGIN            = 10
+MARGIN = 10
 
-def draw_tile(ctx, l, r, w, h):
-    ctx.move_to(l, r)
-    ctx.rectangle(l, r, w, h)
-    ctx.set_source_rgba(*TILE_OUTLINE_COLOUR)
-    ctx.stroke()
+#class CairoContext(context)
+
+class ContextRestorer(object):
+
+    def __init__(self, context):
+        self._context = context
+        self._matrix = None
+
+    def __enter__(self):
+        self._matrix = self._context.get_matrix()
+        return None
+
+    def __exit__(self, type, value, traceback):
+        self._context.set_matrix(self._matrix)
+
+class CairoComponent(object):
+
+    def __init__(self, bounding_box):
+
+        self._bounding_box = bounding_box
+
+class Clock(CairoComponent):
+
+    def __init__(self, bounding_box):
+        CairoComponent.__init__(self, bounding_box)
+
+    def render(self, context):
+
+        with ContextRestorer(context):
+            context.set_source_rgba(*TILE_OUTLINE_COLOUR)
+
+            context.translate(
+                self._bounding_box.left + self._bounding_box.width / 2,
+                self._bounding_box.top + self._bounding_box.height / 2)
+
+            for i in range(0,60,1):
+                with ContextRestorer(context):
+
+                    context.rotate((i*math.pi)/30)
+
+                    if (i % 5) == 0:
+                        #print("a {}".format(i))
+                        context.rectangle(100,
+                                          -2,
+                                          30,
+                                          4)
+                    else:
+                        #print("b {}".format(i))
+                        context.rectangle(120,
+                                          -1,
+                                          10,
+                                          2)
+                    context.fill()
+
+            #context.rectangle(self._bounding_box.left,
+            #                  self._bounding_box.top,
+            #                  self._bounding_box.width,
+            #                  self._bounding_box.height)
+
+            #context.set_source_rgba(*TILE_OUTLINE_COLOUR)
+            #context.stroke()
+
+
 
 
 class ExampleGui(Tk):
@@ -42,17 +104,24 @@ class ExampleGui(Tk):
         self.context.set_source_rgba(*BACKGROUND_COLOUR)
         self.context.fill()
 
-        draw_tile(self.context, MARGIN, MARGIN, w - 2*MARGIN, h - 2*MARGIN)
+        self._clock = Clock(BoundingBox(left=MARGIN,
+                                        top=MARGIN,
+                                        width=w - 2*MARGIN,
+                                        height=h - 2*MARGIN))
+
+
+
+        self._clock.render(self.context)
         #self.context.stroke()
         #self.context.rectangle(1, 1, w-2, h-2)
         #self.context.set_source_rgba(0, 0, 0, 1)
         #self.context.fill()
 
-        self.context.set_source_rgba(1, 0, 0, 1)
-        self.context.move_to(90, 140)
+        #self.context.set_source_rgba(1, 0, 0, 1)
+        #self.context.move_to(90, 140)
         #self.context.rotate(-0.5)
-        self.context.set_font_size(32)
-        self.context.show_text(u'HAPPY DONUT!')
+        #self.context.set_font_size(32)
+        #self.context.show_text(u'HAPPY DONUT!')
 
         self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
