@@ -30,6 +30,14 @@ CLOCK_MINUTE_TICK_COLOUR = (0.5,0.5,0.5,1)
 CLOCK_MINUTE_TICK_DEPTH_PC = 0.01
 CLOCK_MINUTE_TICK_THICKNESS_PC = 0.01
 
+CLOCK_MINUTE_HAND_COLOUR = (1,1,1,1)
+CLOCK_MINUTE_HAND_DEPTH_PC = 0.47
+CLOCK_MINUTE_HAND_THICKNESS_PC = 0.02
+
+CLOCK_HOUR_HAND_COLOUR = (1,1,1,1)
+CLOCK_HOUR_HAND_DEPTH_PC = 0.30
+CLOCK_HOUR_HAND_THICKNESS_PC = 0.05
+
 MARGIN = 10
 
 #class CairoContext(context)
@@ -89,6 +97,7 @@ class Clock(CairoComponent):
 
             margin_bb = CairoComponent.get_margin_box(self._bb)
             real_bb = CairoComponent.get_square_box(margin_bb)
+            unit = real_bb.width
 
             #context.rectangle(real_box.left, real_box.top, real_box.width, real_box.height)
             #context.set_source_rgba(*TILE_OUTLINE_COLOUR)
@@ -116,9 +125,6 @@ class Clock(CairoComponent):
                         tick_depth_pc = CLOCK_MINUTE_TICK_DEPTH_PC
                         tick_thickness_pc = CLOCK_MINUTE_TICK_THICKNESS_PC
 
-
-                    unit = real_bb.width
-
                     context.set_source_rgba(*tick_colour)
                     context.rectangle(-(unit*tick_thickness_pc)/2,
                                       unit/2 - (unit * tick_depth_pc),
@@ -127,10 +133,23 @@ class Clock(CairoComponent):
                     context.fill()
 
             with ContextRestorer(context):
-                # Rotate to this second.
-                context.rotate(now.second*math.pi/30)
-                context.set_source_rgba(1,0,0,1)
-                context.rectangle(-2, 0, 4, unit/2)
+                # Rotate to this hour.
+                context.rotate(now.hour * math.pi / 6)
+                context.set_source_rgba(*CLOCK_HOUR_HAND_COLOUR)
+                context.rectangle(-(unit * CLOCK_HOUR_HAND_THICKNESS_PC) / 2,
+                                  0,
+                                  (unit * CLOCK_HOUR_HAND_THICKNESS_PC),
+                                  -unit * CLOCK_HOUR_HAND_DEPTH_PC)
+                context.fill()
+
+            with ContextRestorer(context):
+                # Rotate to this minute.
+                context.rotate(now.minute*math.pi/30)
+                context.set_source_rgba(*CLOCK_MINUTE_HAND_COLOUR)
+                context.rectangle(-(unit*CLOCK_MINUTE_HAND_THICKNESS_PC)/2,
+                                  0,
+                                  (unit * CLOCK_MINUTE_HAND_THICKNESS_PC),
+                                  -unit * CLOCK_MINUTE_HAND_DEPTH_PC)
                 context.fill()
 
 
@@ -169,7 +188,7 @@ class ExampleGui(Tk):
             self.update_idletasks()
             self.update()
             self.render()
-            time.sleep(1)
+            time.sleep(5)
 
     def render(self):
 
