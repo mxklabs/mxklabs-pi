@@ -52,7 +52,9 @@ manually start the application as follows:
 ## Post-Installation Tweaks
 
 * If your screen is upside down (depends on the case) you can add the
-  line `rotate_lcd=2` to the top of `/boot/config.txt`.
+line `rotate_lcd=2` to the top of `/boot/config.txt`.
 * To auto-start the application on startup add the following line to the bottom
 of ~/.config/lxsession/LXDE-pi/autostart
  @/usr/bin/python3 /home/pi/mxklabs-pi/main.py
+* Set the brightness of the backlight of your display by changing `/sys/class/backlight/rpi_backlight/brightness`
+to have a number between `0` (dark) and `255` (bright).
