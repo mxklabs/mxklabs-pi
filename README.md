@@ -32,6 +32,9 @@ with some additional dependencies:
 * Install [Cairo](https://cairographics.org/) as follows:
  pi@raspberrypi:~$ sudo python3 -m pip install cairocffi
 
+* Install the TkInter imaging module:
+ pi@raspberrypi:~$ sudo apt-get install python3-pil.imagetk
+
 
 ## Installing mxklabs-pi software (i.e. this repository):
 

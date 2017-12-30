@@ -22,6 +22,7 @@ def draw_tile(ctx, l, r, w, h):
 class ExampleGui(Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        super().attributes("-fullscreen", True)
 
         w, h = 800, 480
 
