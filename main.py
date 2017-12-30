@@ -48,11 +48,11 @@ class ExampleGui(Tk):
         #self.context.set_source_rgba(0, 0, 0, 1)
         #self.context.fill()
 
-        self.context.set_source_rgba(1, 1, 1, 0.8)
+        self.context.set_source_rgba(1, 0, 0, 1)
         self.context.move_to(90, 140)
         #self.context.rotate(-0.5)
         self.context.set_font_size(32)
-        self.context.show_text(u'HAPPY HOTDOG!')
+        self.context.show_text(u'HAPPY DONUT!')
 
         self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
