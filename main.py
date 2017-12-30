@@ -8,6 +8,9 @@ from tkinter import Tk, Label
 from PIL import Image, ImageTk
 import cairocffi as cairo
 
+RUN_IN_DEV_MODE = False # If you want to run on a normal PC, not in fullscreen
+                        # and not hiding the mouse pointer, set to True.
+
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
 MARGIN            = 10
@@ -22,7 +25,10 @@ def draw_tile(ctx, l, r, w, h):
 class ExampleGui(Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        super().attributes("-fullscreen", True)
+
+        if not RUN_IN_DEV_MODE:
+            super().attributes("-fullscreen", True)
+            super().config(cursor="none")
 
         w, h = 800, 480
 
