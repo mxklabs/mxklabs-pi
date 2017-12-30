@@ -6,6 +6,7 @@
 
 import argparse
 import collections
+import datetime
 import math
 import time
 
@@ -82,6 +83,8 @@ class Clock(CairoComponent):
 
     def render(self, context):
 
+        now = datetime.datetime.now()
+
         with ContextRestorer(context):
 
             margin_bb = CairoComponent.get_margin_box(self._bb)
@@ -118,10 +121,18 @@ class Clock(CairoComponent):
 
                     context.set_source_rgba(*tick_colour)
                     context.rectangle(-(unit*tick_thickness_pc)/2,
-                                      real_bb.width/2 - (unit * tick_depth_pc),
+                                      unit/2 - (unit * tick_depth_pc),
                                       unit * tick_thickness_pc,
                                       unit * tick_depth_pc)
                     context.fill()
+
+            with ContextRestorer(context):
+                # Rotate to this second.
+                context.rotate(now.second*math.pi/30)
+                context.set_source_rgba(1,0,0,1)
+                context.rectangle(-2, 0, 4, unit/2)
+                context.fill()
+
 
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
@@ -146,8 +157,8 @@ class ExampleGui(Tk):
         #self.context.rotate(-0.5)
         #self.context.set_font_size(32)
         #self.context.show_text(u'HAPPY DONUT!')
-        self.flag = True
 
+        self._clock = Clock(BoundingBox(0, 0, WIDTH, HEIGHT))
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
@@ -158,21 +169,15 @@ class ExampleGui(Tk):
             self.update_idletasks()
             self.update()
             self.render()
-
-            self.flag = not self.flag
             time.sleep(1)
 
     def render(self):
-        print("render")
 
         self.context.rectangle(0, 0, WIDTH, HEIGHT)
-        if self.flag:
-            self.context.set_source_rgba(*BACKGROUND_COLOUR)
-        else:
-            self.context.set_source_rgba(1,0,0,1)
+        self.context.set_source_rgba(*BACKGROUND_COLOUR)
         self.context.fill()
 
-        self._clock = Clock(BoundingBox(0, 0, WIDTH, HEIGHT))
+
         self._clock.render(self.context)
 
         new_img = Image.frombuffer("RGBA", (WIDTH, HEIGHT),
