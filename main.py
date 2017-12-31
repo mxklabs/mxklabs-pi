@@ -190,9 +190,9 @@ class ExampleGui(Tk):
         self.label.pack(expand=True, fill="both")
 
         while True:
+            self.render()
             self.update_idletasks()
             self.update()
-            self.render()
             time.sleep(5)
 
     def render(self):
