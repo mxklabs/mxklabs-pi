@@ -64,19 +64,22 @@ DEFAULT_CLOCK_PARAMS = ClockParams(
         thickness_pc=0.01),
 
     hour_hand_params=ClockHandParams(
+        fill_params=None,
+        stroke_params=StrokeParams(
+            colour=(1, 0, 0, 1),
+            line_width=2,
+            dash_style=([], 0),
+            line_cap=cairo.constants.LINE_CAP_BUTT),
+        hand_front_depth_pc=0.35,
+        hand_back_depth_pc=0.05,
+        hand_thickness_pc=0.02),
+
+    minute_hand_params=ClockHandParams(
         fill_params=FillParams(colour=(1, 1, 1, 1)),
         stroke_params=None,
         hand_front_depth_pc=0.42,
         hand_back_depth_pc=0.05,
-        hand_thickness_pc=0.01),
-
-    minute_hand_params=ClockHandParams(
-        fill_params=None,
-        stroke_params=StrokeParams(colour=(1, 0, 0, 1), line_width=2,
-           dash_style=([], 0), line_cap=cairo.constants.LINE_CAP_BUTT), #None,
-        hand_front_depth_pc=0.25,
-        hand_back_depth_pc=0.05,
-        hand_thickness_pc=0.02))
+        hand_thickness_pc=0.01),)
 
 MARGIN = 10
 
