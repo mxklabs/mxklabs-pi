@@ -22,10 +22,7 @@ FillParams = collections.namedtuple("FillParams", ["colour"])
 StrokeParams = collections.namedtuple("StrokeParams", ["colour", "line_width",
     "dash_style", "line_cap"])
 
-CairoObjectParams = collections.namedtuple("CairoObjectParams",
-    ["bounding_box"])
-
-ClockParams = collections.namedtuple("ClockParams", ["cairo_object_params",
+ClockParams = collections.namedtuple("ClockParams", ["bounding_box", "margin",
     "hour_tick_params", "minute_tick_params", "hour_hand_params",
     "minute_hand_params"])
 
@@ -42,14 +39,15 @@ HEIGHT = 480
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
 
-DEFAULT_CLOCK_PARAMS = ClockParams(
+CLOCK_PARAMS = ClockParams(
 
-    cairo_object_params=CairoObjectParams(
-        bounding_box=BoundingBox(
-            left=40,
-            top=40,
-            width=400,
-            height=400)),
+    margin=50,
+
+    bounding_box=BoundingBox(
+        left=60,
+        top=60,
+        width=360,
+        height=360),
 
     hour_tick_params=ClockTickParams(
         fill_params=FillParams(colour=(1,1,1,1)),
@@ -156,7 +154,8 @@ class Clock(object):
     def __init__(self, params):
         self._params = params
         margin_bb = CairoUtils.get_margin_box(
-            self._params.cairo_object_params.bounding_box)
+            bounding_box=self._params.bounding_box,
+            margin=self._params.margin)
         self._real_bb = CairoUtils.get_square_box(margin_bb)
         self._unit = self._real_bb.width
 
@@ -239,7 +238,7 @@ class ExampleGui(Tk):
         #self.context.set_font_size(32)
         #self.context.show_text(u'HAPPY DONUT!')
 
-        self._clock = Clock(DEFAULT_CLOCK_PARAMS)
+        self._clock = Clock(CLOCK_PARAMS)
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
