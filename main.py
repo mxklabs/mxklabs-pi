@@ -17,8 +17,9 @@ import cairocffi as cairo
 BoundingBox = collections.namedtuple("BoundingBox",
     ["left","top","width", "height"])
 
-ClockHandParams = collections.namedtuple("ClockHandParams",
-    ["colour", "front_depth_pc", "back_depth_pc", "thickness_pc"])
+ClockHandParams = collections.namedtuple("ClockHandParams", ["stroke_colour",
+    "fill_colour", "stroke_thickness", "hand_front_depth_pc",
+    "hand_back_depth_pc", "hand_thickness_pc"])
 
 WIDTH = 800
 HEIGHT = 480
@@ -34,11 +35,21 @@ CLOCK_MINUTE_TICK_COLOUR = (0.5,0.5,0.5,1)
 CLOCK_MINUTE_TICK_DEPTH_PC = 0.01
 CLOCK_MINUTE_TICK_THICKNESS_PC = 0.01
 
-CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(colour=(0,0,1,0.5),
-    front_depth_pc=0.42, back_depth_pc=0.05, thickness_pc=0.02)
+CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(
+    stroke_colour=(0,0,1,1),
+    fill_colour=(0,0,1,1),
+    stroke_thickness=1,
+    hand_front_depth_pc=0.42,
+    hand_back_depth_pc=0.05,
+    hand_thickness_pc=0.02)
 
-CLOCK_HOUR_HAND_PARAMS = ClockHandParams(colour=(1,0,0,0.5),
-    front_depth_pc=0.25, back_depth_pc=0.05, thickness_pc=0.03)
+CLOCK_HOUR_HAND_PARAMS = ClockHandParams(
+    stroke_colour=(1,0,0,1),
+    fill_colour=(1,0,0,1),
+    stroke_thickness=1,
+    hand_front_depth_pc=0.25,
+    hand_back_depth_pc=0.05,
+    hand_thickness_pc=0.03)
 
 MARGIN = 10
 
@@ -135,28 +146,28 @@ class Clock(CairoComponent):
                     context.fill()
 
             # Draw hour hand.
-            self.draw_hand(context,
-                           now.hour * math.pi / 6,
-                           CLOCK_HOUR_HAND_PARAMS)
+            self.draw_hand(context, now.hour, 12, CLOCK_HOUR_HAND_PARAMS)
 
             # Draw minute hand.
-            self.draw_hand(context,
-                           now.minute * math.pi / 30,
-                           CLOCK_MINUTE_HAND_PARAMS)
+            self.draw_hand(context, now.minute, 60, CLOCK_MINUTE_HAND_PARAMS)
 
 
-    def draw_hand(self, context, rotation, params):
+    def draw_hand(self, context, num, den, params):
 
         with ContextRestorer(context):
-
+            rotation = (2 * num * math.pi) / den
             context.rotate(rotation)
-            context.set_source_rgba(*params.colour)
-            context.rectangle(-(self._unit * params.thickness_pc) / 2,
-                              -(self._unit / 2 - self._unit * params.front_depth_pc),
-                              (self._unit * params.thickness_pc),
-                              self._unit * (params.front_depth_pc + params.back_depth_pc))
-            context.stroke()
-
+            context.rectangle(
+                -(self._unit * params.hand_thickness_pc) / 2,
+                -(self._unit / 2 - self._unit * params.hand_front_depth_pc),
+                (self._unit * params.hand_thickness_pc),
+                self._unit * (params.hand_front_depth_pc
+                    + params.hand_back_depth_pc))
+            context.set_source_rgba(*params.stroke_colour)
+            context.set_line_width(params.stroke_thickness)
+            context.stroke_preserve()
+            context.set_source_rgba(*params.fill_colour)
+            context.fill()
 
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
@@ -172,6 +183,7 @@ class ExampleGui(Tk):
 
         self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
         self.context = cairo.Context(self.surface)
+
 
         # Draw something
         #self.context.scale(w, h)
@@ -197,10 +209,13 @@ class ExampleGui(Tk):
 
     def render(self):
 
+        self.context.set_operator(cairo.constants.OPERATOR_OVER)
+
         self.context.rectangle(0, 0, WIDTH, HEIGHT)
         self.context.set_source_rgba(*BACKGROUND_COLOUR)
         self.context.fill()
 
+        self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
 
         self._clock.render(self.context)
 
