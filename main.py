@@ -22,6 +22,9 @@ FillParams = collections.namedtuple("FillParams", ["colour"])
 StrokeParams = collections.namedtuple("StrokeParams", ["colour", "line_width",
     "dash_style", "line_cap"])
 
+ClockTickParams = collections.namedtuple("ClockTickParams", ["fill_params",
+    "stroke_params", "depth_pc", "thickness_pc"])
+
 ClockHandParams = collections.namedtuple("ClockHandParams", ["fill_params",
     "stroke_params", "hand_front_depth_pc", "hand_back_depth_pc",
     "hand_thickness_pc"])
@@ -32,13 +35,17 @@ HEIGHT = 480
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
 
-CLOCK_HOUR_TICK_COLOUR = (1,1,1,1)
-CLOCK_HOUR_TICK_DEPTH_PC = 0.03
-CLOCK_HOUR_TICK_THICKNESS_PC = 0.01
+CLOCK_HOUR_TICK_PARAMS = ClockTickParams(
+    fill_params=FillParams(colour=(1,1,1,1)),
+    stroke_params=None,
+    depth_pc=0.03,
+    thickness_pc=0.01)
 
-CLOCK_MINUTE_TICK_COLOUR = (0.5,0.5,0.5,1)
-CLOCK_MINUTE_TICK_DEPTH_PC = 0.01
-CLOCK_MINUTE_TICK_THICKNESS_PC = 0.01
+CLOCK_MINUTE_TICK_PARAMS = ClockTickParams(
+    fill_params=FillParams(colour=(0.5,0.5,0.5,1)),
+    stroke_params=None,
+    depth_pc=0.01,
+    thickness_pc=0.01)
 
 CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(
     fill_params=FillParams(colour=(1, 1, 1, 1)),
@@ -151,30 +158,13 @@ class Clock(CairoComponent):
                 self._real_bb.left + self._real_bb.width / 2,
                 self._real_bb.top + self._real_bb.height / 2)
 
-            for i in range(0,60):
-                with ContextRestorer(context):
-                    # Rotate to this tick.
-                    context.rotate((i*math.pi)/30)
+            for i in range(0, 60):
+                if (i % 5) == 0:
+                    tick_params = CLOCK_HOUR_TICK_PARAMS
+                else:
+                    tick_params = CLOCK_MINUTE_TICK_PARAMS
 
-                    # We draw hour ticks differently to minute ticks.
-                    is_hour_tick = (i % 5) == 0
-
-                    if is_hour_tick:
-                        tick_colour = CLOCK_HOUR_TICK_COLOUR
-                        tick_depth_pc = CLOCK_HOUR_TICK_DEPTH_PC
-                        tick_thickness_pc = CLOCK_HOUR_TICK_THICKNESS_PC
-
-                    else:
-                        tick_colour = CLOCK_MINUTE_TICK_COLOUR
-                        tick_depth_pc = CLOCK_MINUTE_TICK_DEPTH_PC
-                        tick_thickness_pc = CLOCK_MINUTE_TICK_THICKNESS_PC
-
-                    context.set_source_rgba(*tick_colour)
-                    context.rectangle(-(self._unit*tick_thickness_pc)/2,
-                                      self._unit/2 - (self._unit * tick_depth_pc),
-                                      self._unit * tick_thickness_pc,
-                                      self._unit * tick_depth_pc)
-                    context.fill()
+                self.draw_tick(context, i, 60, tick_params)
 
             # Draw hour hand.
             self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, CLOCK_HOUR_HAND_PARAMS)
@@ -182,6 +172,18 @@ class Clock(CairoComponent):
             # Draw minute hand.
             self.draw_hand(context, now.minute, 60, CLOCK_MINUTE_HAND_PARAMS)
 
+    def draw_tick(self, context, num, den, params):
+
+        with ContextRestorer(context):
+            rotation = (2 * math.pi) * (num / den)
+            context.rotate(rotation)
+
+            context.rectangle(-(self._unit * params.thickness_pc) / 2,
+                              self._unit / 2 - (self._unit * params.depth_pc),
+                              self._unit * params.thickness_pc,
+                              self._unit * params.depth_pc)
+
+            CairoUtils.draw(context, params)
 
     def draw_hand(self, context, num, den, params):
 
