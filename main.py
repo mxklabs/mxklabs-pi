@@ -46,10 +46,10 @@ DEFAULT_CLOCK_PARAMS = ClockParams(
 
     cairo_object_params=CairoObjectParams(
         bounding_box=BoundingBox(
-            left=0,
-            top=0,
-            width=800,
-            height=480)),
+            left=40,
+            top=40,
+            width=400,
+            height=400)),
 
     hour_tick_params=ClockTickParams(
         fill_params=FillParams(colour=(1,1,1,1)),
