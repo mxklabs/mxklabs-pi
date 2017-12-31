@@ -41,7 +41,6 @@ CLOCK_MINUTE_TICK_DEPTH_PC = 0.01
 CLOCK_MINUTE_TICK_THICKNESS_PC = 0.01
 
 CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(
-    #stroke_params=StrokeParams(colour=(1,0,0,1), line_width=1, dash_style=([], 0), line_cap=cairo.constants.LINE_CAP_BUTT),
     fill_params=FillParams(colour=(1, 1, 1, 1)),
     stroke_params=None,
     hand_front_depth_pc=0.42,
@@ -49,11 +48,9 @@ CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(
     hand_thickness_pc=0.01)
 
 CLOCK_HOUR_HAND_PARAMS = ClockHandParams(
-
-    fill_params=None, #FillParams(colour=(1, 0, 0, 1)),
+    fill_params=None,
     stroke_params=StrokeParams(colour=(1, 1, 1, 1), line_width=2,
-                               dash_style=([], 0),
-                               line_cap=cairo.constants.LINE_CAP_BUTT), #None,
+       dash_style=([], 0), line_cap=cairo.constants.LINE_CAP_BUTT), #None,
     hand_front_depth_pc=0.25,
     hand_back_depth_pc=0.05,
     hand_thickness_pc=0.02)
@@ -65,51 +62,32 @@ MARGIN = 10
 class CairoUtils(object):
 
     @staticmethod
-    def draw(context, params    ):
-
-        fill_params = params.fill_params
-        stroke_params = params.stroke_params
-
-        if fill_params:
-            CairoUtils.set_fill_params(context, fill_params)
-            if stroke_params:
-                context.fill_preserve()
-            else:
-                context.fill()
-
-        if stroke_params:
-            CairoUtils.set_stroke_params(context, stroke_params)
-            context.stroke()
-
-    @staticmethod
     def set_fill_params(context, fill_params):
+        """ Set context to fill_params. """
         context.set_source_rgba(*fill_params.colour)
 
     @staticmethod
     def set_stroke_params(context, stroke_params):
+        """ Set context to stroke_params. """
         context.set_source_rgba(*stroke_params.colour)
         context.set_line_width(stroke_params.line_width)
         context.set_dash(*stroke_params.dash_style)
         context.set_line_cap(stroke_params.line_cap)
 
-class ContextRestorer(object):
-
-    def __init__(self, context):
-        self._context = context
-        self._matrix = None
-
-    def __enter__(self):
-        self._matrix = self._context.get_matrix()
-        return None
-
-    def __exit__(self, type, value, traceback):
-        self._context.set_matrix(self._matrix)
-
-class CairoComponent(object):
-
-    def __init__(self, bounding_box):
-
-        self._bb = bounding_box
+    @staticmethod
+    def draw(context, params):
+        """ Draw fill and/or stroke with params. """
+        if params.fill_params and params.stroke_params:
+            CairoUtils.set_fill_params(context, params.fill_params)
+            context.fill_preserve()
+            CairoUtils.set_stroke_params(context, params.stroke_params)
+            context.stroke()
+        elif params.fill_params:
+            CairoUtils.set_fill_params(context, params.fill_params)
+            context.fill()
+        elif params.stroke_params:
+            CairoUtils.set_stroke_params(context, params.stroke_params)
+            context.stroke()
 
     @staticmethod
     def get_square_box(bounding_box):
@@ -130,29 +108,45 @@ class CairoComponent(object):
         result = BoundingBox(
             left=bb.left + margin,
             top=bb.top + margin,
-            width=bb.width - 2*margin,
-            height=bb.height - 2*margin)
+            width=bb.width - 2 * margin,
+            height=bb.height - 2 * margin)
         return result
+
+class ContextRestorer(object):
+
+    def __init__(self, context):
+        self._context = context
+        self._matrix = None
+
+    def __enter__(self):
+        self._matrix = self._context.get_matrix()
+        return None
+
+    def __exit__(self, type, value, traceback):
+        self._context.set_matrix(self._matrix)
+
+class CairoComponent(object):
+
+    def __init__(self, bounding_box):
+
+        self._bb = bounding_box
 
 class Clock(CairoComponent):
 
     def __init__(self, bounding_box):
         CairoComponent.__init__(self, bounding_box)
-        self._margin_bb = CairoComponent.get_margin_box(self._bb)
-        self._real_bb = CairoComponent.get_square_box(self._margin_bb)
+        self._margin_bb = CairoUtils.get_margin_box(self._bb)
+        self._real_bb = CairoUtils.get_square_box(self._margin_bb)
         self._unit = self._real_bb.width
 
     def render(self, context):
 
+        # Work out the time.
         now = datetime.datetime.now()
 
         with ContextRestorer(context):
 
-
-            #context.rectangle(real_box.left, real_box.top, real_box.width, real_box.height)
-            #context.set_source_rgba(*TILE_OUTLINE_COLOUR)
-            #context.stroke()
-
+            # Translate to middle of clock face.
             context.translate(
                 self._real_bb.left + self._real_bb.width / 2,
                 self._real_bb.top + self._real_bb.height / 2)
@@ -198,9 +192,9 @@ class Clock(CairoComponent):
             context.rectangle(
                 -(self._unit * params.hand_thickness_pc) / 2,
                 -(self._unit * params.hand_front_depth_pc),
-                (self._unit * params.hand_thickness_pc),
-                self._unit * (params.hand_front_depth_pc
-                    + params.hand_back_depth_pc))
+                 (self._unit * params.hand_thickness_pc),
+                 (self._unit * (params.hand_front_depth_pc
+                    + params.hand_back_depth_pc)))
 
             CairoUtils.draw(context, params)
 
