@@ -14,13 +14,20 @@ from tkinter import Tk, Label
 from PIL import Image, ImageTk
 import cairocffi as cairo
 
-BoundingBox = collections.namedtuple("BoundingBox",
-    ["left","top","width", "height"])
+BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
+    "height"])
 
 FillParams = collections.namedtuple("FillParams", ["colour"])
 
 StrokeParams = collections.namedtuple("StrokeParams", ["colour", "line_width",
     "dash_style", "line_cap"])
+
+CairoObjectParams = collections.namedtuple("CairoObjectParams",
+    ["bounding_box"])
+
+ClockParams = collections.namedtuple("ClockParams", ["cairo_object_params",
+    "hour_tick_params", "minute_tick_params", "hour_hand_params",
+    "minute_hand_params"])
 
 ClockTickParams = collections.namedtuple("ClockTickParams", ["fill_params",
     "stroke_params", "depth_pc", "thickness_pc"])
@@ -35,32 +42,41 @@ HEIGHT = 480
 BACKGROUND_COLOUR = (0, 0, 0, 1)
 TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
 
-CLOCK_HOUR_TICK_PARAMS = ClockTickParams(
-    fill_params=FillParams(colour=(1,1,1,1)),
-    stroke_params=None,
-    depth_pc=0.03,
-    thickness_pc=0.01)
+DEFAULT_CLOCK_PARAMS = ClockParams(
 
-CLOCK_MINUTE_TICK_PARAMS = ClockTickParams(
-    fill_params=FillParams(colour=(0.5,0.5,0.5,1)),
-    stroke_params=None,
-    depth_pc=0.01,
-    thickness_pc=0.01)
+    cairo_object_params=CairoObjectParams(
+        bounding_box=BoundingBox(
+            left=0,
+            top=0,
+            width=800,
+            height=480)),
 
-CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(
-    fill_params=FillParams(colour=(1, 1, 1, 1)),
-    stroke_params=None,
-    hand_front_depth_pc=0.42,
-    hand_back_depth_pc=0.05,
-    hand_thickness_pc=0.01)
+    hour_tick_params=ClockTickParams(
+        fill_params=FillParams(colour=(1,1,1,1)),
+        stroke_params=None,
+        depth_pc=0.03,
+        thickness_pc=0.01),
 
-CLOCK_HOUR_HAND_PARAMS = ClockHandParams(
-    fill_params=None,
-    stroke_params=StrokeParams(colour=(1, 1, 1, 1), line_width=2,
-       dash_style=([], 0), line_cap=cairo.constants.LINE_CAP_BUTT), #None,
-    hand_front_depth_pc=0.25,
-    hand_back_depth_pc=0.05,
-    hand_thickness_pc=0.02)
+    minute_tick_params=ClockTickParams(
+        fill_params=FillParams(colour=(0.5,0.5,0.5,1)),
+        stroke_params=None,
+        depth_pc=0.01,
+        thickness_pc=0.01),
+
+    hour_hand_params=ClockHandParams(
+        fill_params=FillParams(colour=(1, 1, 1, 1)),
+        stroke_params=None,
+        hand_front_depth_pc=0.42,
+        hand_back_depth_pc=0.05,
+        hand_thickness_pc=0.01),
+
+    minute_hand_params=ClockHandParams(
+        fill_params=None,
+        stroke_params=StrokeParams(colour=(1, 0, 0, 1), line_width=2,
+           dash_style=([], 0), line_cap=cairo.constants.LINE_CAP_BUTT), #None,
+        hand_front_depth_pc=0.25,
+        hand_back_depth_pc=0.05,
+        hand_thickness_pc=0.02))
 
 MARGIN = 10
 
@@ -132,18 +148,13 @@ class ContextRestorer(object):
     def __exit__(self, type, value, traceback):
         self._context.set_matrix(self._matrix)
 
-class CairoComponent(object):
+class Clock(object):
 
-    def __init__(self, bounding_box):
-
-        self._bb = bounding_box
-
-class Clock(CairoComponent):
-
-    def __init__(self, bounding_box):
-        CairoComponent.__init__(self, bounding_box)
-        self._margin_bb = CairoUtils.get_margin_box(self._bb)
-        self._real_bb = CairoUtils.get_square_box(self._margin_bb)
+    def __init__(self, params):
+        self._params = params
+        margin_bb = CairoUtils.get_margin_box(
+            self._params.cairo_object_params.bounding_box)
+        self._real_bb = CairoUtils.get_square_box(margin_bb)
         self._unit = self._real_bb.width
 
     def render(self, context):
@@ -160,17 +171,17 @@ class Clock(CairoComponent):
 
             for i in range(0, 60):
                 if (i % 5) == 0:
-                    tick_params = CLOCK_HOUR_TICK_PARAMS
+                    tick_params = self._params.hour_tick_params
                 else:
-                    tick_params = CLOCK_MINUTE_TICK_PARAMS
+                    tick_params = self._params.minute_tick_params
 
                 self.draw_tick(context, i, 60, tick_params)
 
             # Draw hour hand.
-            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, CLOCK_HOUR_HAND_PARAMS)
+            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, self._params.hour_hand_params)
 
             # Draw minute hand.
-            self.draw_hand(context, now.minute, 60, CLOCK_MINUTE_HAND_PARAMS)
+            self.draw_hand(context, now.minute, 60, self._params.minute_hand_params)
 
     def draw_tick(self, context, num, den, params):
 
@@ -225,7 +236,7 @@ class ExampleGui(Tk):
         #self.context.set_font_size(32)
         #self.context.show_text(u'HAPPY DONUT!')
 
-        self._clock = Clock(BoundingBox(0, 0, WIDTH, HEIGHT))
+        self._clock = Clock(DEFAULT_CLOCK_PARAMS)
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
