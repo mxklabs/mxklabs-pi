@@ -14,11 +14,16 @@ from tkinter import Tk, Label
 from PIL import Image, ImageTk
 import cairocffi as cairo
 
+StrokeParams = collections.namedtuple("StrokeParams", ["colour", "line_width",
+    "dash_style", "line_cap"])
+
 BoundingBox = collections.namedtuple("BoundingBox",
     ["left","top","width", "height"])
 
-ClockHandParams = collections.namedtuple("ClockHandParams", ["stroke_colour",
-    "fill_colour", "stroke_thickness", "hand_front_depth_pc",
+
+
+ClockHandParams = collections.namedtuple("ClockHandParams", ["stroke_params",
+    "fill_colour", "hand_front_depth_pc",
     "hand_back_depth_pc", "hand_thickness_pc"])
 
 WIDTH = 800
@@ -36,24 +41,32 @@ CLOCK_MINUTE_TICK_DEPTH_PC = 0.01
 CLOCK_MINUTE_TICK_THICKNESS_PC = 0.01
 
 CLOCK_MINUTE_HAND_PARAMS = ClockHandParams(
-    stroke_colour=(0,0,1,1),
-    fill_colour=(0,0,1,1),
-    stroke_thickness=1,
+    stroke_params=StrokeParams(colour=(1,1,1,1), line_width=1, dash_style=([], 0), line_cap=cairo.constants.LINE_CAP_BUTT),
+    fill_colour=(0.5, 0.5, 0.5, 1),
     hand_front_depth_pc=0.42,
     hand_back_depth_pc=0.05,
-    hand_thickness_pc=0.02)
+    hand_thickness_pc=0.01)
 
 CLOCK_HOUR_HAND_PARAMS = ClockHandParams(
-    stroke_colour=(1,0,0,1),
+    #stroke_params=StrokeParams(colour=(1,1,1,1), line_width=1, dash_style=([],0), line_cap=cairo.constants.LINE_CAP_BUTT),
+    stroke_params=None,
     fill_colour=(1,0,0,1),
-    stroke_thickness=1,
     hand_front_depth_pc=0.25,
     hand_back_depth_pc=0.05,
-    hand_thickness_pc=0.03)
+    hand_thickness_pc=0.015)
 
 MARGIN = 10
 
 #class CairoContext(context)
+
+class CairoUtils(object):
+
+    @staticmethod
+    def set_stroke_params(context, stroke_params):
+        context.set_source_rgba(*stroke_params.colour)
+        context.set_line_width(stroke_params.line_width)
+        context.set_dash(*stroke_params.dash_style)
+        context.set_line_cap(stroke_params.line_cap)
 
 class ContextRestorer(object):
 
@@ -146,7 +159,7 @@ class Clock(CairoComponent):
                     context.fill()
 
             # Draw hour hand.
-            self.draw_hand(context, now.hour, 12, CLOCK_HOUR_HAND_PARAMS)
+            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, CLOCK_HOUR_HAND_PARAMS)
 
             # Draw minute hand.
             self.draw_hand(context, now.minute, 60, CLOCK_MINUTE_HAND_PARAMS)
@@ -155,19 +168,23 @@ class Clock(CairoComponent):
     def draw_hand(self, context, num, den, params):
 
         with ContextRestorer(context):
-            rotation = (2 * num * math.pi) / den
+            rotation = (2 * math.pi) * (num / den)
             context.rotate(rotation)
             context.rectangle(
                 -(self._unit * params.hand_thickness_pc) / 2,
-                -(self._unit / 2 - self._unit * params.hand_front_depth_pc),
+                -(self._unit * params.hand_front_depth_pc),
                 (self._unit * params.hand_thickness_pc),
                 self._unit * (params.hand_front_depth_pc
                     + params.hand_back_depth_pc))
-            context.set_source_rgba(*params.stroke_colour)
-            context.set_line_width(params.stroke_thickness)
-            context.stroke_preserve()
+
+
             context.set_source_rgba(*params.fill_colour)
-            context.fill()
+            context.fill_preserve()
+
+            if params.stroke_params:
+                CairoUtils.set_stroke_params(context, params.stroke_params)
+                print(den)
+                context.stroke()
 
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
