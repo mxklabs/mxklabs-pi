@@ -82,25 +82,48 @@ CLOCK_PARAMS = ClockParams(
 CLOCK_EX_PARAMS = \
 {
     'clock' : CLOCK_PARAMS,
-    'margin' : 20,
+    'margin' : 5,
 
     'timeline' :
     {
-        'stroke': StrokeParams(
-            colour=(0.5, 0.5, 0.5, 1),
-            line_width=1.5,
-            dash_style=([], 0),
-            line_cap=cairo.constants.LINE_CAP_BUTT),
-
         'segments' :
         [
             {
                 'thickness' : 20,
-                'fill' :FillParams(colour=(1, 0, 1, 1))
+                'fill' :FillParams(colour=(1, 0, 1, 1)),
+                'stroke': StrokeParams(
+                    colour=(0.5, 0.5, 0.5, 1),
+                    line_width=0.5,
+                    dash_style=([5, 5], 0),
+                    line_cap=cairo.constants.LINE_CAP_BUTT)
+
             },
             {
                 'thickness': 20,
                 'fill': FillParams(colour=(1, 1, 0, 1)),
+                'stroke': StrokeParams(
+                    colour=(0.5, 0.5, 0.5, 0.75),
+                    line_width=0.5,
+                    dash_style=([5, 5], 0),
+                    line_cap=cairo.constants.LINE_CAP_BUTT)
+            },
+            {
+                'thickness': 20,
+                'fill': FillParams(colour=(1, 1, 0, 1)),
+                'stroke': StrokeParams(
+                    colour=(0.5, 0.5, 0.5, 0.5),
+                    line_width=0.5,
+                    dash_style=([5, 5], 0),
+                    line_cap=cairo.constants.LINE_CAP_BUTT)
+            },
+            {
+                'thickness': 20,
+                'fill': FillParams(colour=(1, 1, 0, 1)),
+                'stroke': StrokeParams(
+                    colour=(0.5, 0.5, 0.5, 0.25),
+                    line_width=0.5,
+                    dash_style=([5, 5], 0),
+                    line_cap=cairo.constants.LINE_CAP_BUTT)
             }
         ]
     }
@@ -272,14 +295,12 @@ class ClockEx(object):
 
         radius = self._clock_unit / 2
 
-        CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
-        context.arc(*self._centre, radius, 0, 2 * math.pi)
-        context.stroke()
-
         for ts in self._params['timeline']['segments']:
-            radius += ts['thickness']
-            context.arc(*self._centre, radius, 0, 2 * math.pi)
+            CairoUtils.set_stroke_params(context, ts['stroke'])
+            context.arc(*self._centre, radius + ts['thickness']/2, 0, 2 * math.pi)
             context.stroke()
+            radius += ts['thickness']
+
 
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
