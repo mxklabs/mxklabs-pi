@@ -29,14 +29,20 @@ Our application requires [Python 3](https://www.python.org/downloads/) (already
 installed on [Raspbian Stretch](https://www.raspberrypi.org/downloads/raspbian/))
 with some additional dependencies:
 
-* Install [Cairo](https://cairographics.org/) as follows:
- pi@raspberrypi:~$ sudo python3 -m pip install cairocffi
+* Install six (a python 2/3 compatibility library):
+ pi@raspberrypi:~$ sudo python3 -m pip install --upgrade six
+
+* Install [Cairo](https://cairographics.org/):
+ pi@raspberrypi:~$ sudo python3 -m pip install --upgrade cairocffi
+
+* Install the Google API Python client:
+ pi@raspberrypi:~$ sudo python3 -m pip install --upgrade google-api-python-client
+
 
 * Install the TkInter imaging module:
  pi@raspberrypi:~$ sudo apt-get install python3-pil.imagetk
 
-
-## Installing mxklabs-pi software (i.e. this repository):
+## Installing this software (mxklabs-pi)
 
 The easiest way to install our this repository is to use git to clone the source
 code directly from the github repository:
@@ -47,6 +53,15 @@ This puts the source code in `/home/pi/mxklabs-pi`. Now, you should be able to
 manually start the application as follows:
 
  pi@raspberrypi:~$ python3 mxklabs-pi/main.py
+
+## Configuring mxklabs-pi software
+
+If you're planning to use the Google Calendar API feature then you'll need to
+download a `client_secret.json` to `/home/pi/mxklabs-pi/client_secret.json`
+(follow [this guide](https://developers.google.com/google-apps/calendar/quickstart/python)).
+Note that this application was developed to stay within Google's free tier
+quotas; there's no need to add a billing account.
+
 
 
 ## Post-Installation Tweaks
