@@ -51,7 +51,7 @@ TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
 
 CLOCK_PARAMS = ClockParams(
 
-    margin=5,
+    margin=0,
 
     hour_tick_params=ClockTickParams(
         fill_params=FillParams(colour=(1,1,1,1)),
@@ -90,12 +90,16 @@ CLOCK_PARAMS = ClockParams(
 CLOCK_EX_PARAMS = \
 {
     'clock' : CLOCK_PARAMS,
-    'margin' : 30,
+    'margin' :  0,
 
     'plugins' : [testplugin.TestPlugin()],
 
     'timeline' :
     {
+        'thickness' : 20,
+        'margin' : 30,
+        'spiral_fudge_factor1' : 10,
+
         'stroke': StrokeParams(
             colour=(0.5, 0.5, 0.5, 1),
             line_width=1,
@@ -287,17 +291,39 @@ class ClockEx(object):
         with ContextRestorer(context):
 
             context.translate(*self._centre)
-            context.move_to(0, 0)
 
             context.set_source_rgba(1,1,1,1)
             context.set_line_width(2)
 
-            a = 0.1
-            distance_between_bands = 20
-            #a =
+            #a = 0.1
+            thickness = self._params['timeline']['thickness']
+            margin = self._params['timeline']['margin']
+            segments = self._params['timeline']['segments']
 
-            for t in range(0, 200, 1):
-                context.line_to(t*math.sin(t*a), t*math.cos(t*a))
+            a = thickness / (2 * math.pi)
+
+            radius_max = (self._unit/2) # - thickness
+            t_max = radius_max / a
+            print("t_max=" + str(t_max))
+            t_min = t_max - (2 * math.pi * len(segments))
+            print("t_min=" + str(t_min))
+
+            t = t_min
+
+            def get_spiral_point(t):
+                return (a * t * -math.sin(t), a * t * -math.cos(t))
+
+            while t < t_max:
+                point = (a * t * -math.sin(t), a * t * -math.cos(t))
+                if t == t_min:
+                    context.move_to(*point)
+                else:
+                    context.line_to(*point)
+
+                t += 0.1
+
+            point = (a * t_max * -math.sin(t_max), a * t_max * -math.cos(t_max))
+            context.line_to(*point)
 
             context.stroke()
 
