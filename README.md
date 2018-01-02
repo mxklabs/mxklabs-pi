@@ -38,7 +38,6 @@ with some additional dependencies:
 * Install the Google API Python client:
  pi@raspberrypi:~$ sudo python3 -m pip install --upgrade google-api-python-client
 
-
 * Install the TkInter imaging module:
  pi@raspberrypi:~$ sudo apt-get install python3-pil.imagetk
 

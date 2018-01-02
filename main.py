@@ -294,7 +294,7 @@ class ClockEx(object):
 
             a = 0.1
             distance_between_bands = 20
-            a = 
+            #a =
 
             for t in range(0, 200, 1):
                 context.line_to(t*math.sin(t*a), t*math.cos(t*a))
