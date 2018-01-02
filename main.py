@@ -14,6 +14,10 @@ from tkinter import Tk, Label
 from PIL import Image, ImageTk
 import cairocffi as cairo
 
+import common
+import testplugin
+import timelineplugin
+
 BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
     "height"])
 
@@ -62,68 +66,59 @@ CLOCK_PARAMS = ClockParams(
         thickness_pc=0.01),
 
     hour_hand_params=ClockHandParams(
-        fill_params=None,
+        fill_params=FillParams(colour=(1, 1, 1, 0.5)),
         stroke_params=StrokeParams(
-            colour=(1, 0, 0, 1),
+            colour=(0, 0, 0, 1),
             line_width=2,
             dash_style=([], 0),
             line_cap=cairo.constants.LINE_CAP_BUTT),
-        hand_front_depth_pc=0.35,
+        hand_front_depth_pc=0.30,
         hand_back_depth_pc=0.05,
-        hand_thickness_pc=0.02),
+        hand_thickness_pc=0.03),
 
     minute_hand_params=ClockHandParams(
-        fill_params=FillParams(colour=(1, 1, 1, 1)),
-        stroke_params=None,
-        hand_front_depth_pc=0.42,
-        hand_back_depth_pc=0.05,
-        hand_thickness_pc=0.01))
+        fill_params=FillParams(colour=(0.5, 0.5, 1, 0.5)),
+        stroke_params=StrokeParams(
+            colour=(0, 0, 0, 1),
+            line_width=2,
+            dash_style=([], 0),
+            line_cap=cairo.constants.LINE_CAP_BUTT),
+        hand_front_depth_pc=0.50,
+        hand_back_depth_pc=0.04,
+        hand_thickness_pc=0.02))
 
 CLOCK_EX_PARAMS = \
 {
     'clock' : CLOCK_PARAMS,
-    'margin' : 5,
+    'margin' : 30,
+
+    'plugins' : [testplugin.TestPlugin()],
 
     'timeline' :
     {
+        'stroke': StrokeParams(
+            colour=(0.5, 0.5, 0.5, 1),
+            line_width=1,
+            dash_style=([], 0),
+            line_cap=cairo.constants.LINE_CAP_BUTT),
+
         'segments' :
         [
             {
-                'thickness' : 20,
-                'fill' :FillParams(colour=(1, 0, 1, 1)),
-                'stroke': StrokeParams(
-                    colour=(0.5, 0.5, 0.5, 1),
-                    line_width=0.5,
-                    dash_style=([5, 5], 0),
-                    line_cap=cairo.constants.LINE_CAP_BUTT)
-
+                'thickness' : 35,
+                'fill' :FillParams(colour=(1, 0, 1, 1))
+            },
+            {
+                'thickness': 30,
+                'fill': FillParams(colour=(1, 1, 0, 1))
+            },
+            {
+                'thickness': 25,
+                'fill': FillParams(colour=(1, 1, 0, 1))
             },
             {
                 'thickness': 20,
-                'fill': FillParams(colour=(1, 1, 0, 1)),
-                'stroke': StrokeParams(
-                    colour=(0.5, 0.5, 0.5, 0.75),
-                    line_width=0.5,
-                    dash_style=([5, 5], 0),
-                    line_cap=cairo.constants.LINE_CAP_BUTT)
-            },
-            {
-                'thickness': 20,
-                'fill': FillParams(colour=(1, 1, 0, 1)),
-                'stroke': StrokeParams(
-                    colour=(0.5, 0.5, 0.5, 0.5),
-                    line_width=0.5,
-                    dash_style=([5, 5], 0),
-                    line_cap=cairo.constants.LINE_CAP_BUTT)
-            },
-            {
-                'thickness': 20,
-                'fill': FillParams(colour=(1, 1, 0, 1)),
-                'stroke': StrokeParams(
-                    colour=(0.5, 0.5, 0.5, 0.25),
-                    line_width=0.5,
-                    dash_style=([5, 5], 0),
-                    line_cap=cairo.constants.LINE_CAP_BUTT)
+                'fill': FillParams(colour=(1, 1, 0, 1))
             }
         ]
     }
@@ -210,10 +205,7 @@ class Clock(object):
         self._real_bb = CairoUtils.get_square_box(margin_bb)
         self._unit = self._real_bb.width
 
-    def render(self, context):
-
-        # Work out the time.
-        now = datetime.datetime.now()
+    def render(self, context, now):
 
         with ContextRestorer(context):
 
@@ -288,18 +280,126 @@ class ClockEx(object):
             margin=timeline_margin)
         self._clock_unit = self._clock_bb.width
 
-        self._clock = Clock(self._params['clock'], self._clock_bb)
+        self._clock = Clock(self._params['clock'], bounding_box)
 
-    def render(self, context):
-        self._clock.render(context)
+    def render(self, context, now):
 
-        radius = self._clock_unit / 2
+        with ContextRestorer(context):
 
-        for ts in self._params['timeline']['segments']:
-            CairoUtils.set_stroke_params(context, ts['stroke'])
-            context.arc(*self._centre, radius + ts['thickness']/2, 0, 2 * math.pi)
+            context.translate(*self._centre)
+            context.move_to(0, 0)
+
+            context.set_source_rgba(1,1,1,1)
+            context.set_line_width(2)
+
+            a = 0.1
+            distance_between_bands = 20
+            a = 
+
+            for t in range(0, 200, 1):
+                context.line_to(t*math.sin(t*a), t*math.cos(t*a))
+
             context.stroke()
-            radius += ts['thickness']
+
+
+            '''
+            radius = self._unit / 2
+    
+            segments = self._params['timeline']['segments']
+    
+            base_start_angle = -0.5 * math.pi
+            base_end_angle = base_start_angle + 2 * math.pi
+    
+            previous_radius = None
+    
+            def get_angle(angle, radius, approx_offset):
+                return angle + math.atan(approx_offset / radius)
+    
+            def get_point(angle, radius):
+                return (self._centre[0] + math.cos(angle) * radius, \
+                        self._centre[1] + math.sin(angle) * radius)
+    
+            for segment in segments[::-1]:
+    
+                radius -= segment['thickness']
+    
+    
+                #end_angle_delta = math.atan(2*segment['thickness']/radius)
+                #end_angle = start_angle + 2 * math.pi - end_angle_delta
+    
+                #control_point_angle_delta = math.atan(segment['thickness']/radius)
+                #control_point_angle = start_angle + 2 * math.pi - control_point_angle_delta
+    
+                if previous_radius:
+                    # Draw join to previous curve.
+                    control_point1 = get_point(get_angle(base_end_angle, previous_radius, -5), previous_radius)
+                    control_point2 = get_point(get_angle(base_end_angle, radius, -5), radius)
+                    end_point = get_point(base_start_angle, radius)
+                    context.curve_to(*control_point1, *control_point2, *end_point)
+    
+    
+    
+                # Draw the main arc.
+                arc_start_angle = base_start_angle
+                arc_end_angle = get_angle(base_end_angle, radius, -10)
+                context.arc(*self._centre, radius, arc_start_angle, arc_end_angle)
+    
+                # Remember for next round!
+                previous_radius = radius
+    
+    
+            CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
+            context.stroke()
+    
+            for plugin in self._params['plugins']:
+                assert(isinstance(plugin, timelineplugin.TimelinePlugin))
+    
+                end_delta = datetime.timedelta(hours=12*len(segments))
+                timeline_items = plugin.get_timeline_items(now, now + end_delta)
+    
+                for timeline_item in timeline_items:
+                    assert(isinstance(timeline_item, timelineplugin.TimelineItem))
+    
+                    item_start = timeline_item.start()
+                    item_end = timeline_item.end()
+    
+                    arcs = []
+    
+                    segment_start = now.replace(hour=now.hour%2, minute=0, second=0, microsecond=0)
+                    segment_end = segment_start + datetime.timedelta(hours=12)
+                    segment_radius = self._clock_unit / 2
+    
+                    base_angle = (2 * math.pi * (now.hour * 60 + now.minute)) / (12 * 60)
+    
+                    for segment in self._params['timeline']['segments']:
+    
+                        if not (item_end <= segment_start or item_start >= segment_end):
+                            start = max(item_start, segment_start)
+                            end = min(item_end, segment_end)
+    
+                            multiplier = 2 * math.pi / (12 * 60 * 60)
+    
+                            start_angle = multiplier * (start - segment_start).total_seconds()
+                            end_angle = multiplier * (end - segment_start   ).total_seconds()
+    
+                            arc = common.ArcParams(
+                                centre=self._centre,
+                                radius=segment_radius + segment['thickness']/2,
+                                start_angle=base_angle + start_angle,
+                                end_angle=base_angle + end_angle)
+    
+                            arcs.append(arc)
+    
+                        segment_start = segment_end
+                        segment_end = segment_start + datetime.timedelta(hours=12)
+                        segment_radius += segment['thickness']
+    
+                    plugin.render_on_clockface(context, timeline_items, arcs)
+            '''
+
+        self._clock.render(context, now)
+
+
 
 
 class ExampleGui(Tk):
@@ -348,15 +448,17 @@ class ExampleGui(Tk):
 
     def render(self):
 
+        now = datetime.datetime.now()
+
         self.context.set_operator(cairo.constants.OPERATOR_OVER)
 
         self.context.rectangle(0, 0, WIDTH, HEIGHT)
         self.context.set_source_rgba(*BACKGROUND_COLOUR)
         self.context.fill()
 
-        self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
+        #self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
 
-        self._clock.render(self.context)
+        self._clock.render(self.context, now)
 
         new_img = Image.frombuffer("RGBA", (WIDTH, HEIGHT),
                                    self.surface.get_data(),
