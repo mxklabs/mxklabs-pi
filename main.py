@@ -102,8 +102,8 @@ CLOCK_EX_PARAMS = \
 
         'stroke': StrokeParams(
             colour=(0.7, 0.7, 0.7, 1),
-            line_width=2,
-            dash_style=([10, 10], 0),
+            line_width=1.5,
+            dash_style=([], 0),
             line_cap=cairo.constants.LINE_CAP_BUTT),
 
         'segments' :
@@ -291,14 +291,16 @@ class ClockEx(object):
 
         self._clock = Clock(self._params['clock'], bounding_box)
 
-    def spiral_point_generator(self, t, a=None, b=None):
+    def spiral_point_generator(self, t, a, b):
         x = a * t * -math.sin(t + b)
         y = a * t * -math.cos(t + b)
         return (self._centre[0] + x, self._centre[1] + y)
 
-    def spiral_line_generator(self, offset):
+    def spiral_line_generator(self, offset, now):
 
         result = []
+
+        start_angle = 2 * math.pi * (now.hour * 60 + now.minute) / (12 * 60)
 
         margin = self._params['timeline']['margin']
         thickness = self._params['timeline']['thickness']
@@ -315,7 +317,7 @@ class ClockEx(object):
         # print("t_max=" + str(t_max))
         #print("t_min=" + str(t_min))
 
-        b = -t_max
+        b = -t_max - start_angle
 
         t = t_min
 
@@ -334,15 +336,14 @@ class ClockEx(object):
     def render(self, context, now):
 
         #context.translate(*self._centre)
-
-
         thickness = self._params['timeline']['thickness']
 
-        points = self.spiral_line_generator(offset=thickness)
+        points = self.spiral_line_generator(offset=thickness, now=now)
         CairoUtils.move_to_points(context, points)
         CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
         context.stroke()
 
+        '''
         points = self.spiral_line_generator(offset=7.5)
         CairoUtils.move_to_points(context, points)
         context.set_source_rgba(1, 0, 0, 1)
@@ -356,7 +357,7 @@ class ClockEx(object):
         context.set_line_width(8)
         context.set_dash([],0)
         context.stroke()
-
+        '''
         '''
         radius = self._unit / 2
 
