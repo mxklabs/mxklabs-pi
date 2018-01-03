@@ -43,15 +43,17 @@ class TimelinePlugin(object):
         """
         pass
 
-    def render_on_clockface(self, cairo_context, timeline_item, arc_params):
+    def render_on_clockface(self, cairo_context, timeline_item, point_generator, line_generator):
         """
         Render the item on an arc.
         :param cairo_context: A cairo context object.
         :param timeline_item: The timeline item to render (as returned by the
         get_timeline_items function).
-        :param arc: A collection of one or more ArcParam objects
-        describing the desired arc to render the timeline item on in
-        chronological order.
+        :param point_generator: A callable that takes a time and returns the
+        point on the clockface associated with that time.
+        :param point_generator: A callable that takes a begin time and end time
+        and and returns a collection of point representing the spiral on the
+        clockface associated with that timespan.
         """
         pass
 

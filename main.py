@@ -96,14 +96,14 @@ CLOCK_EX_PARAMS = \
 
     'timeline' :
     {
-        'thickness' : 20,
-        'margin' : 30,
+        'thickness' : 25,
+        'margin' : 13,
         'spiral_fudge_factor1' : 10,
 
         'stroke': StrokeParams(
-            colour=(0.5, 0.5, 0.5, 1),
-            line_width=1,
-            dash_style=([], 0),
+            colour=(0.7, 0.7, 0.7, 1),
+            line_width=2,
+            dash_style=([10, 10], 0),
             line_cap=cairo.constants.LINE_CAP_BUTT),
 
         'segments' :
@@ -185,6 +185,11 @@ class CairoUtils(object):
             width=bb.width - 2 * margin,
             height=bb.height - 2 * margin)
         return result
+
+    @staticmethod
+    def move_to_points(context, points):
+        for point in points:
+            context.line_to(*point)
 
 class ContextRestorer(object):
 
@@ -286,142 +291,166 @@ class ClockEx(object):
 
         self._clock = Clock(self._params['clock'], bounding_box)
 
+    def spiral_point_generator(self, t, a=None, b=None):
+        x = a * t * -math.sin(t + b)
+        y = a * t * -math.cos(t + b)
+        return (self._centre[0] + x, self._centre[1] + y)
+
+    def spiral_line_generator(self, offset):
+
+        result = []
+
+        margin = self._params['timeline']['margin']
+        thickness = self._params['timeline']['thickness']
+        segments = self._params['timeline']['segments']
+
+        a = thickness / (2 * math.pi)
+
+        max_radius = (self._unit / 2) - margin - offset
+        #print("max_radius={}".format(max_radius))
+
+        t_max = max_radius / a
+        t_min = t_max - (2 * math.pi * len(segments))
+
+        # print("t_max=" + str(t_max))
+        #print("t_min=" + str(t_min))
+
+        b = -t_max
+
+        t = t_min
+
+
+        while t < t_max:
+            point = self.spiral_point_generator(t, a, b)
+            result.append(point)
+
+            t += 0.1
+
+        point = self.spiral_point_generator(t_max, a, b)
+        result.append(point)
+
+        return result
+
     def render(self, context, now):
 
-        with ContextRestorer(context):
-
-            context.translate(*self._centre)
-
-            context.set_source_rgba(1,1,1,1)
-            context.set_line_width(2)
-
-            #a = 0.1
-            thickness = self._params['timeline']['thickness']
-            margin = self._params['timeline']['margin']
-            segments = self._params['timeline']['segments']
-
-            a = thickness / (2 * math.pi)
-
-            radius_max = (self._unit/2) # - thickness
-            t_max = radius_max / a
-            print("t_max=" + str(t_max))
-            t_min = t_max - (2 * math.pi * len(segments))
-            print("t_min=" + str(t_min))
-
-            t = t_min
-
-            def get_spiral_point(t):
-                return (a * t * -math.sin(t), a * t * -math.cos(t))
-
-            while t < t_max:
-                point = (a * t * -math.sin(t), a * t * -math.cos(t))
-                if t == t_min:
-                    context.move_to(*point)
-                else:
-                    context.line_to(*point)
-
-                t += 0.1
-
-            point = (a * t_max * -math.sin(t_max), a * t_max * -math.cos(t_max))
-            context.line_to(*point)
-
-            context.stroke()
+        #context.translate(*self._centre)
 
 
-            '''
-            radius = self._unit / 2
-    
-            segments = self._params['timeline']['segments']
-    
-            base_start_angle = -0.5 * math.pi
-            base_end_angle = base_start_angle + 2 * math.pi
-    
-            previous_radius = None
-    
-            def get_angle(angle, radius, approx_offset):
-                return angle + math.atan(approx_offset / radius)
-    
-            def get_point(angle, radius):
-                return (self._centre[0] + math.cos(angle) * radius, \
-                        self._centre[1] + math.sin(angle) * radius)
-    
-            for segment in segments[::-1]:
-    
-                radius -= segment['thickness']
-    
-    
-                #end_angle_delta = math.atan(2*segment['thickness']/radius)
-                #end_angle = start_angle + 2 * math.pi - end_angle_delta
-    
-                #control_point_angle_delta = math.atan(segment['thickness']/radius)
-                #control_point_angle = start_angle + 2 * math.pi - control_point_angle_delta
-    
-                if previous_radius:
-                    # Draw join to previous curve.
-                    control_point1 = get_point(get_angle(base_end_angle, previous_radius, -5), previous_radius)
-                    control_point2 = get_point(get_angle(base_end_angle, radius, -5), radius)
-                    end_point = get_point(base_start_angle, radius)
-                    context.curve_to(*control_point1, *control_point2, *end_point)
-    
-    
-    
-                # Draw the main arc.
-                arc_start_angle = base_start_angle
-                arc_end_angle = get_angle(base_end_angle, radius, -10)
-                context.arc(*self._centre, radius, arc_start_angle, arc_end_angle)
-    
-                # Remember for next round!
-                previous_radius = radius
-    
-    
-            CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
-            context.stroke()
-    
-            for plugin in self._params['plugins']:
-                assert(isinstance(plugin, timelineplugin.TimelinePlugin))
-    
-                end_delta = datetime.timedelta(hours=12*len(segments))
-                timeline_items = plugin.get_timeline_items(now, now + end_delta)
-    
-                for timeline_item in timeline_items:
-                    assert(isinstance(timeline_item, timelineplugin.TimelineItem))
-    
-                    item_start = timeline_item.start()
-                    item_end = timeline_item.end()
-    
-                    arcs = []
-    
-                    segment_start = now.replace(hour=now.hour%2, minute=0, second=0, microsecond=0)
+        thickness = self._params['timeline']['thickness']
+
+        points = self.spiral_line_generator(offset=thickness)
+        CairoUtils.move_to_points(context, points)
+        CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
+        context.stroke()
+
+        points = self.spiral_line_generator(offset=7.5)
+        CairoUtils.move_to_points(context, points)
+        context.set_source_rgba(1, 0, 0, 1)
+        context.set_line_width(8)
+        context.set_dash([],0)
+        context.stroke()
+
+        points = self.spiral_line_generator(offset=17.5)
+        CairoUtils.move_to_points(context, points)
+        context.set_source_rgba(1, 1, 0, 1)
+        context.set_line_width(8)
+        context.set_dash([],0)
+        context.stroke()
+
+        '''
+        radius = self._unit / 2
+
+        segments = self._params['timeline']['segments']
+
+        base_start_angle = -0.5 * math.pi
+        base_end_angle = base_start_angle + 2 * math.pi
+
+        previous_radius = None
+
+        def get_angle(angle, radius, approx_offset):
+            return angle + math.atan(approx_offset / radius)
+
+        def get_point(angle, radius):
+            return (self._centre[0] + math.cos(angle) * radius, \
+                    self._centre[1] + math.sin(angle) * radius)
+
+        for segment in segments[::-1]:
+
+            radius -= segment['thickness']
+
+
+            #end_angle_delta = math.atan(2*segment['thickness']/radius)
+            #end_angle = start_angle + 2 * math.pi - end_angle_delta
+
+            #control_point_angle_delta = math.atan(segment['thickness']/radius)
+            #control_point_angle = start_angle + 2 * math.pi - control_point_angle_delta
+
+            if previous_radius:
+                # Draw join to previous curve.
+                control_point1 = get_point(get_angle(base_end_angle, previous_radius, -5), previous_radius)
+                control_point2 = get_point(get_angle(base_end_angle, radius, -5), radius)
+                end_point = get_point(base_start_angle, radius)
+                context.curve_to(*control_point1, *control_point2, *end_point)
+
+
+
+            # Draw the main arc.
+            arc_start_angle = base_start_angle
+            arc_end_angle = get_angle(base_end_angle, radius, -10)
+            context.arc(*self._centre, radius, arc_start_angle, arc_end_angle)
+
+            # Remember for next round!
+            previous_radius = radius
+
+
+        CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
+        context.stroke()
+
+        for plugin in self._params['plugins']:
+            assert(isinstance(plugin, timelineplugin.TimelinePlugin))
+
+            end_delta = datetime.timedelta(hours=12*len(segments))
+            timeline_items = plugin.get_timeline_items(now, now + end_delta)
+
+            for timeline_item in timeline_items:
+                assert(isinstance(timeline_item, timelineplugin.TimelineItem))
+
+                item_start = timeline_item.start()
+                item_end = timeline_item.end()
+
+                arcs = []
+
+                segment_start = now.replace(hour=now.hour%2, minute=0, second=0, microsecond=0)
+                segment_end = segment_start + datetime.timedelta(hours=12)
+                segment_radius = self._clock_unit / 2
+
+                base_angle = (2 * math.pi * (now.hour * 60 + now.minute)) / (12 * 60)
+
+                for segment in self._params['timeline']['segments']:
+
+                    if not (item_end <= segment_start or item_start >= segment_end):
+                        start = max(item_start, segment_start)
+                        end = min(item_end, segment_end)
+
+                        multiplier = 2 * math.pi / (12 * 60 * 60)
+
+                        start_angle = multiplier * (start - segment_start).total_seconds()
+                        end_angle = multiplier * (end - segment_start   ).total_seconds()
+
+                        arc = common.ArcParams(
+                            centre=self._centre,
+                            radius=segment_radius + segment['thickness']/2,
+                            start_angle=base_angle + start_angle,
+                            end_angle=base_angle + end_angle)
+
+                        arcs.append(arc)
+
+                    segment_start = segment_end
                     segment_end = segment_start + datetime.timedelta(hours=12)
-                    segment_radius = self._clock_unit / 2
-    
-                    base_angle = (2 * math.pi * (now.hour * 60 + now.minute)) / (12 * 60)
-    
-                    for segment in self._params['timeline']['segments']:
-    
-                        if not (item_end <= segment_start or item_start >= segment_end):
-                            start = max(item_start, segment_start)
-                            end = min(item_end, segment_end)
-    
-                            multiplier = 2 * math.pi / (12 * 60 * 60)
-    
-                            start_angle = multiplier * (start - segment_start).total_seconds()
-                            end_angle = multiplier * (end - segment_start   ).total_seconds()
-    
-                            arc = common.ArcParams(
-                                centre=self._centre,
-                                radius=segment_radius + segment['thickness']/2,
-                                start_angle=base_angle + start_angle,
-                                end_angle=base_angle + end_angle)
-    
-                            arcs.append(arc)
-    
-                        segment_start = segment_end
-                        segment_end = segment_start + datetime.timedelta(hours=12)
-                        segment_radius += segment['thickness']
-    
-                    plugin.render_on_clockface(context, timeline_items, arcs)
-            '''
+                    segment_radius += segment['thickness']
+
+                plugin.render_on_clockface(context, timeline_items, arcs)
+        '''
 
         self._clock.render(context, now)
 
