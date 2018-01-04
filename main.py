@@ -97,7 +97,7 @@ CLOCK_EX_PARAMS = \
     'timeline' :
     {
         'thickness' : 25,
-        'margin' : 13,
+        'margin' : 0,
         'spiral_fudge_factor1' : 10,
 
         'stroke': StrokeParams(
@@ -291,44 +291,51 @@ class ClockEx(object):
 
         self._clock = Clock(self._params['clock'], bounding_box)
 
-    def spiral_point_generator(self, t, a, b):
-        x = a * t * -math.sin(t + b)
-        y = a * t * -math.cos(t + b)
-        return (self._centre[0] + x, self._centre[1] + y)
+    def datetime_to_t(self, datetime):
+        return 2 * math.pi * (datetime.hour * 60 + datetime.minute) / (12 * 60)
 
-    def spiral_line_generator(self, offset, now):
+    def timedelta_to_t(self, timedelta):
+        return timedelta.total_seconds() / (12 * 60 * 60)
 
-        result = []
-
-        start_angle = 2 * math.pi * (now.hour * 60 + now.minute) / (12 * 60)
-
+    def get_spiral_params(self, offset, now):
+        """
+        Calculate the parameters a,b to the spiral described by
+            x = (a * t + b) * math.sin(c * t + d)
+            y = (a * t + b) * math.cos(c * t + d)
+        where t=0 is closest to the edge of the clock face and every increment
+        of 2*math.pi corresponds to one rotation of the clock face.
+        """
         margin = self._params['timeline']['margin']
         thickness = self._params['timeline']['thickness']
-        segments = self._params['timeline']['segments']
 
-        a = thickness / (2 * math.pi)
-
+        start_angle = self.datetime_to_t(now)
         max_radius = (self._unit / 2) - margin - offset
-        #print("max_radius={}".format(max_radius))
 
-        t_max = max_radius / a
-        t_min = t_max - (2 * math.pi * len(segments))
+        # Parameter 'a' corresponds to minus one 'thickness' per rotation.
+        a = -thickness / (2 * math.pi)
+        b = max_radius
+        c = -1.0
+        d = math.pi - start_angle
 
-        # print("t_max=" + str(t_max))
-        #print("t_min=" + str(t_min))
+        return (a, b, c, d)
 
-        b = -t_max - start_angle
+    def get_spiral_point(self, spiral_params, t):
+        scalar = spiral_params[0] * t + spiral_params[1]
+        angle = spiral_params[2] * t + spiral_params[3]
+        x = scalar * math.sin(angle)
+        y = scalar * math.cos(angle)
 
+        return (self._centre[0] + x, self._centre[1] + y)
+
+    def get_spiral_points(self, spiral_params, t_min, t_max):
+        result = []
         t = t_min
-
-
         while t < t_max:
-            point = self.spiral_point_generator(t, a, b)
+            point = self.get_spiral_point(spiral_params, t)
             result.append(point)
-
             t += 0.1
 
-        point = self.spiral_point_generator(t_max, a, b)
+        point = self.get_spiral_point(spiral_params, t_max)
         result.append(point)
 
         return result
@@ -337,11 +344,38 @@ class ClockEx(object):
 
         #context.translate(*self._centre)
         thickness = self._params['timeline']['thickness']
+        segments = self._params['timeline']['segments']
 
-        points = self.spiral_line_generator(offset=thickness, now=now)
-        CairoUtils.move_to_points(context, points)
+        t_min = self.datetime_to_t(now)
+        t_max = self.datetime_to_t(now + datetime.timedelta(hours=12*len(segments)))
+
+        separator_spiral_params = self.get_spiral_params(offset=thickness, now=now)
+        separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
+        CairoUtils.move_to_points(context, separator_spiral_points)
         CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
         context.stroke()
+
+        labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
+
+        # Find next
+
+        floored_now = now.replace(hour=now.hour//3*3, minute=0, second=0, microsecond=0)
+
+        for i in [0,1,2]:
+            label_datetime = floored_now + datetime.timedelta(hours=3*i)
+            label_t = self.timedelta_to_t(now - label_datetime)
+            #print(floored_now_t)
+            label_point = self.get_spiral_point(labels_spiral_params, label_t)
+
+            context.move_to(*label_point)
+            # self.context.rotate(-0.5)
+            context.set_font_size(15)
+            context.show_text('{}'.format(i))
+
+        #floored_now_plus_15 = floored_now + datetime.timedelta(minute=15)
+
+
+
 
         '''
         points = self.spiral_line_generator(offset=7.5)
