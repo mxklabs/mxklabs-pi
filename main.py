@@ -295,7 +295,7 @@ class ClockEx(object):
         return 2 * math.pi * (datetime.hour * 60 + datetime.minute) / (12 * 60)
 
     def timedelta_to_t(self, timedelta):
-        return timedelta.total_seconds() / (12 * 60 * 60)
+        return 2*math.pi*timedelta.total_seconds() / (12 * 60 * 60)
 
     def get_spiral_params(self, offset, now):
         """
@@ -346,8 +346,11 @@ class ClockEx(object):
         thickness = self._params['timeline']['thickness']
         segments = self._params['timeline']['segments']
 
-        t_min = self.datetime_to_t(now)
-        t_max = self.datetime_to_t(now + datetime.timedelta(hours=12*len(segments)))
+        t_min = 0
+        t_max = 2*math.pi*len(segments)
+
+        #print("t_min={}".format(t_min))
+        #print("t_max={}".format(t_max))
 
         separator_spiral_params = self.get_spiral_params(offset=thickness, now=now)
         separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
@@ -358,19 +361,50 @@ class ClockEx(object):
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
 
         # Find next
-
         floored_now = now.replace(hour=now.hour//3*3, minute=0, second=0, microsecond=0)
+        print("floored_now={}".format(floored_now))
 
-        for i in [0,1,2]:
+        context.set_font_size(10)
+
+        now_t = self.datetime_to_t(now)
+
+        for i in range(1,1 + 4 * len(segments)):
             label_datetime = floored_now + datetime.timedelta(hours=3*i)
-            label_t = self.timedelta_to_t(now - label_datetime)
-            #print(floored_now_t)
-            label_point = self.get_spiral_point(labels_spiral_params, label_t)
 
-            context.move_to(*label_point)
-            # self.context.rotate(-0.5)
-            context.set_font_size(15)
-            context.show_text('{}'.format(i))
+            label_secs = (label_datetime - now).total_seconds()
+            label_hours = 12 * int(label_secs // (12 * 60 * 60)) % (12 * 60 * 60)
+
+            if label_hours > 0:
+                    label_text = "+{}h".format(label_hours)
+
+                    #if label_days == 0:
+                    #    label_text = '{}h {}m'.format(label_hours, label_mins)
+                    #else:
+                    #    label_text = '{}d {}h'.format(label_days, label_hours)
+
+                    _, _, w, h, _, _ = context.text_extents(label_text)
+                    print("w={}".format(w))
+                    print("h={}".format(h))
+
+                    print("label_datetime={}".format(label_datetime))
+                    label_timedelta = label_datetime - now
+                    print("label_timedelta={}".format(label_timedelta))
+                    label_t = self.timedelta_to_t(label_timedelta)
+                    print("label_t={}".format(label_t ))
+
+                    #print(floored_now_t)
+
+
+                    label_point = self.get_spiral_point(labels_spiral_params, label_t)#
+
+                    with ContextRestorer(context):
+                        context.translate(label_point[0], label_point[1])
+                        context.rotate(now_t + label_t)
+                        context.move_to(-w/2, h/2)
+                        context.show_text(label_text)
+
+            #context.arc(*label_point, 5, 0, 2*math.pi)
+            #context.stroke()
 
         #floored_now_plus_15 = floored_now + datetime.timedelta(minute=15)
 
