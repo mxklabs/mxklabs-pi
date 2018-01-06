@@ -12,11 +12,13 @@ import time
 
 from tkinter import Tk, Label
 from PIL import Image, ImageTk
+
 import cairocffi as cairo
 
 import common
 import testplugin
 import timelineplugin
+
 from config import cfg
 
 BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
@@ -217,6 +219,9 @@ class Timeline(object):
 
         point = self.get_spiral_point(spiral_params, t_max)
         result.append(point)
+
+        if len(result) == 1:
+            result.append(result[0])
 
         return result
 

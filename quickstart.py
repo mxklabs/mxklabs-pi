@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import httplib2
 import os
 
@@ -19,6 +20,7 @@ SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 CLIENT_SECRET_FILE = './credentials/google-api/client_secret.json'
 APPLICATION_NAME = 'mxk'
 
+flags = False
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -76,22 +78,21 @@ class GoogleCalendar(timelineplugin.TimelinePlugin):
 
             credentials = get_credentials()
 
+            now = datetime.datetime.utcnow().isoformat() + 'Z'
             http = credentials.authorize(httplib2.Http())
             service = discovery.build('calendar', 'v3', http=http)
 
-            now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+            # 'Z' indicates UTC time
             #print('Getting the upcoming 10 events')
 
             # calendars = service.calendars.list()
-
 
             eventsResult = service.events().list(
                 calendarId='primary', timeMin=now, maxResults=10,
                 singleEvents=True,
                 orderBy='startTime').execute()
+
             events = eventsResult.get('items', [])
-
-
 
             self._events = [GoogleCalendarTimelineItem(event) for event in events]
 
@@ -123,27 +124,27 @@ class GoogleCalendar(timelineplugin.TimelinePlugin):
     '''
     credentials = get_credentials()
 
-http = credentials.authorize(httplib2.Http())
-service = discovery.build('calendar', 'v3', http=http)
-
-now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-print('Getting the upcoming 10 events')
-
-#calendars = service.calendars.list()
-
-
-if True:
-    eventsResult = service.events().list(
-        calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
-        orderBy='startTime').execute()
-    events = eventsResult.get('items', [])
-
-    if not events:
-        print('No upcoming events found.')
-    for event in events:
-        pp = pprint.PrettyPrinter()
-        pp.pprint(event)
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        print(start, event['summary'])
-'''
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('calendar', 'v3', http=http)
+    
+    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    print('Getting the upcoming 10 events')
+    
+    #calendars = service.calendars.list()
+    
+    
+    if True:
+        eventsResult = service.events().list(
+            calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
+            orderBy='startTime').execute()
+        events = eventsResult.get('items', [])
+    
+        if not events:
+            print('No upcoming events found.')
+        for event in events:
+            pp = pprint.PrettyPrinter()
+            pp.pprint(event)
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            print(start, event['summary'])
+    '''
 
