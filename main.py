@@ -17,117 +17,10 @@ import cairocffi as cairo
 import common
 import testplugin
 import timelineplugin
+from config import cfg
 
 BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
     "height"])
-
-FillParams = collections.namedtuple("FillParams", ["colour"])
-
-StrokeParams = collections.namedtuple("StrokeParams", ["colour", "line_width",
-    "dash_style", "line_cap"])
-
-ClockParams = collections.namedtuple("ClockParams", ["margin",
-    "hour_tick_params", "minute_tick_params", "hour_hand_params",
-    "minute_hand_params"])
-
-ClockTickParams = collections.namedtuple("ClockTickParams", ["fill_params",
-    "stroke_params", "depth_pc", "thickness_pc"])
-
-ClockHandParams = collections.namedtuple("ClockHandParams", ["fill_params",
-    "stroke_params", "hand_front_depth_pc", "hand_back_depth_pc",
-    "hand_thickness_pc"])
-
-ClockExParams = collections.namedtuple("ClockExParams", ["clock_params",
-    "margin", "number_of_timeline_segments", "timeline_segment_params"])
-
-TimelineSegmentParams = collections.namedtuple("TimelineSegmentParams", ["clock_params",
-    "thickness", "fill_params", "stroke_params"])
-
-WIDTH = 800
-HEIGHT = 480
-
-BACKGROUND_COLOUR = (0, 0, 0, 1)
-TILE_OUTLINE_COLOUR = (1, 1, 1, 1)
-
-CLOCK_PARAMS = ClockParams(
-
-    margin=0,
-
-    hour_tick_params=ClockTickParams(
-        fill_params=FillParams(colour=(1,1,1,1)),
-        stroke_params=None,
-        depth_pc=0.03,
-        thickness_pc=0.01),
-
-    minute_tick_params=ClockTickParams(
-        fill_params=FillParams(colour=(0.5,0.5,0.5,1)),
-        stroke_params=None,
-        depth_pc=0.01,
-        thickness_pc=0.01),
-
-    hour_hand_params=ClockHandParams(
-        fill_params=FillParams(colour=(1, 1, 1, 0.5)),
-        stroke_params=StrokeParams(
-            colour=(0, 0, 0, 1),
-            line_width=2,
-            dash_style=([], 0),
-            line_cap=cairo.constants.LINE_CAP_BUTT),
-        hand_front_depth_pc=0.30,
-        hand_back_depth_pc=0.05,
-        hand_thickness_pc=0.03),
-
-    minute_hand_params=ClockHandParams(
-        fill_params=FillParams(colour=(0.5, 0.5, 1, 0.5)),
-        stroke_params=StrokeParams(
-            colour=(0, 0, 0, 1),
-            line_width=2,
-            dash_style=([], 0),
-            line_cap=cairo.constants.LINE_CAP_BUTT),
-        hand_front_depth_pc=0.50,
-        hand_back_depth_pc=0.04,
-        hand_thickness_pc=0.02))
-
-CLOCK_EX_PARAMS = \
-{
-    'clock' : CLOCK_PARAMS,
-    'margin' :  0,
-
-    'plugins' : [testplugin.TestPlugin()],
-
-    'timeline' :
-    {
-        'thickness' : 25,
-        'margin' : 0,
-        'spiral_fudge_factor1' : 10,
-
-        'stroke': StrokeParams(
-            colour=(0.7, 0.7, 0.7, 1),
-            line_width=1.5,
-            dash_style=([], 0),
-            line_cap=cairo.constants.LINE_CAP_BUTT),
-
-        'segments' :
-        [
-            {
-                'thickness' : 35,
-                'fill' :FillParams(colour=(1, 0, 1, 1))
-            },
-            {
-                'thickness': 30,
-                'fill': FillParams(colour=(1, 1, 0, 1))
-            },
-            {
-                'thickness': 25,
-                'fill': FillParams(colour=(1, 1, 0, 1))
-            },
-            {
-                'thickness': 20,
-                'fill': FillParams(colour=(1, 1, 0, 1))
-            }
-        ]
-    }
-}
-
 
 class CairoUtils(object):
 
@@ -147,16 +40,16 @@ class CairoUtils(object):
     @staticmethod
     def draw(context, params):
         """ Draw fill and/or stroke with params. """
-        if params.fill_params and params.stroke_params:
-            CairoUtils.set_fill_params(context, params.fill_params)
+        if params.fill and params.stroke:
+            CairoUtils.set_fill_params(context, params.fill)
             context.fill_preserve()
-            CairoUtils.set_stroke_params(context, params.stroke_params)
+            CairoUtils.set_stroke_params(context, params.stroke)
             context.stroke()
-        elif params.fill_params:
-            CairoUtils.set_fill_params(context, params.fill_params)
+        elif params.fill:
+            CairoUtils.set_fill_params(context, params.fill)
             context.fill()
-        elif params.stroke_params:
-            CairoUtils.set_stroke_params(context, params.stroke_params)
+        elif params.stroke:
+            CairoUtils.set_stroke_params(context, params.stroke)
             context.stroke()
 
     @staticmethod
@@ -206,11 +99,10 @@ class ContextRestorer(object):
 
 class Clock(object):
 
-    def __init__(self, params, bounding_box):
-        self._params = params
+    def __init__(self, bounding_box):
         margin_bb = CairoUtils.get_margin_box(
             bounding_box=bounding_box,
-            margin=self._params.margin)
+            margin=cfg.clock.margin)
         self._real_bb = CairoUtils.get_square_box(margin_bb)
         self._unit = self._real_bb.width
 
@@ -227,17 +119,17 @@ class Clock(object):
             for i in range(0, 60):
 
                 if (i % 5) == 0:
-                    tick_params = self._params.hour_tick_params
+                    tick_params = cfg.clock.hour_ticks
                 else:
-                    tick_params = self._params.minute_tick_params
+                    tick_params = cfg.clock.minute_ticks
 
                 self.draw_tick(context, i, 60, tick_params)
 
             # Draw hour hand.
-            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, self._params.hour_hand_params)
+            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, cfg.clock.hour_hand)
 
             # Draw minute hand.
-            self.draw_hand(context, now.minute, 60, self._params.minute_hand_params)
+            self.draw_hand(context, now.minute, 60, cfg.clock.minute_hand)
 
     def draw_tick(self, context, num, den, params):
 
@@ -259,37 +151,25 @@ class Clock(object):
             context.rotate(rotation)
 
             context.rectangle(
-                -(self._unit * params.hand_thickness_pc) / 2,
-                -(self._unit * params.hand_front_depth_pc),
-                 (self._unit * params.hand_thickness_pc),
-                 (self._unit * (params.hand_front_depth_pc
-                    + params.hand_back_depth_pc)))
+                -(self._unit * params.thickness_pc) / 2,
+                -(self._unit * params.front_depth_pc),
+                 (self._unit * params.thickness_pc),
+                 (self._unit * (params.front_depth_pc
+                    + params.back_depth_pc)))
 
             CairoUtils.draw(context, params)
 
-class ClockEx(object):
+class Timeline(object):
 
-    def __init__(self, params, bounding_box):
+    def __init__(self, bounding_box):
 
-        self._params = params
         self._bb = CairoUtils.get_square_box(
             CairoUtils.get_margin_box(
                 bounding_box=bounding_box,
-                margin=self._params['margin']))
+                margin=cfg.timeline.margin))
         self._unit = self._bb.width
         self._centre = (self._bb.left + self._bb.width / 2,
                         self._bb.top + self._bb.height / 2)
-
-
-        timeline_segments = self._params['timeline']['segments']
-        timeline_margin = sum([ts['thickness'] for ts in timeline_segments])
-
-        self._clock_bb = CairoUtils.get_margin_box(
-            self._bb,
-            margin=timeline_margin)
-        self._clock_unit = self._clock_bb.width
-
-        self._clock = Clock(self._params['clock'], bounding_box)
 
     def datetime_to_t(self, datetime):
         return 2 * math.pi * (datetime.hour * 60 + datetime.minute) / (12 * 60)
@@ -305,8 +185,8 @@ class ClockEx(object):
         where t=0 is closest to the edge of the clock face and every increment
         of 2*math.pi corresponds to one rotation of the clock face.
         """
-        margin = self._params['timeline']['margin']
-        thickness = self._params['timeline']['thickness']
+        margin = cfg.timeline.margin
+        thickness = cfg.timeline.thickness
 
         start_angle = self.datetime_to_t(now)
         max_radius = (self._unit / 2) - margin - offset
@@ -343,11 +223,11 @@ class ClockEx(object):
     def render(self, context, now):
 
         #context.translate(*self._centre)
-        thickness = self._params['timeline']['thickness']
-        segments = self._params['timeline']['segments']
+        thickness = cfg.timeline.thickness
+        length = cfg.timeline.length
 
         t_min = 0
-        t_max = 2*math.pi*len(segments)
+        t_max = (length.total_seconds() / (12 * 60 * 60)) * 2 * math.pi
 
         #print("t_min={}".format(t_min))
         #print("t_max={}".format(t_max))
@@ -355,7 +235,7 @@ class ClockEx(object):
         separator_spiral_params = self.get_spiral_params(offset=thickness, now=now)
         separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
         CairoUtils.move_to_points(context, separator_spiral_points)
-        CairoUtils.set_stroke_params(context, self._params['timeline']['stroke'])
+        CairoUtils.set_stroke_params(context, cfg.timeline.stroke)
         context.stroke()
 
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
@@ -367,9 +247,13 @@ class ClockEx(object):
         context.set_font_size(10)
 
         now_t = self.datetime_to_t(now)
+        i = 1
 
-        for i in range(1,1 + 4 * len(segments)):
+        while True:
+
             label_datetime = floored_now + datetime.timedelta(hours=3*i)
+            if label_datetime > now + length:
+                break
 
             label_secs = (label_datetime - now).total_seconds()
             label_hours = 12 * int(label_secs // (12 * 60 * 60)) % (12 * 60 * 60)
@@ -383,14 +267,14 @@ class ClockEx(object):
                     #    label_text = '{}d {}h'.format(label_days, label_hours)
 
                     _, _, w, h, _, _ = context.text_extents(label_text)
-                    print("w={}".format(w))
-                    print("h={}".format(h))
+                    #print("w={}".format(w))
+                    #print("h={}".format(h))
 
-                    print("label_datetime={}".format(label_datetime))
+                    #print("label_datetime={}".format(label_datetime))
                     label_timedelta = label_datetime - now
-                    print("label_timedelta={}".format(label_timedelta))
+                    #print("label_timedelta={}".format(label_timedelta))
                     label_t = self.timedelta_to_t(label_timedelta)
-                    print("label_t={}".format(label_t ))
+                    #print("label_t={}".format(label_t ))
 
                     #print(floored_now_t)
 
@@ -405,6 +289,7 @@ class ClockEx(object):
 
             #context.arc(*label_point, 5, 0, 2*math.pi)
             #context.stroke()
+            i += 1
 
         #floored_now_plus_15 = floored_now + datetime.timedelta(minute=15)
 
@@ -521,11 +406,6 @@ class ClockEx(object):
                 plugin.render_on_clockface(context, timeline_items, arcs)
         '''
 
-        self._clock.render(context, now)
-
-
-
-
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -534,11 +414,11 @@ class ExampleGui(Tk):
             super().attributes("-fullscreen", True)
             super().config(cursor="none")
 
-        w, h = WIDTH, HEIGHT
+        self.size = cfg.window.width, cfg.window.height
 
-        self.geometry("{}x{}".format(w, h))
+        self.geometry("{}x{}".format(*self.size))
 
-        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *self.size)
         self.context = cairo.Context(self.surface)
 
 
@@ -557,7 +437,10 @@ class ExampleGui(Tk):
             width=440,
             height=440)
 
-        self._clock = ClockEx(CLOCK_EX_PARAMS, bounding_box)
+
+        self._clock = Clock(bounding_box)
+        self._timeline = Timeline(bounding_box)
+
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
@@ -576,15 +459,16 @@ class ExampleGui(Tk):
 
         self.context.set_operator(cairo.constants.OPERATOR_OVER)
 
-        self.context.rectangle(0, 0, WIDTH, HEIGHT)
-        self.context.set_source_rgba(*BACKGROUND_COLOUR)
+        self.context.rectangle(0, 0, *self.size)
+        self.context.set_source_rgba(*cfg.window.background_colour)
         self.context.fill()
 
         #self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
 
         self._clock.render(self.context, now)
+        self._timeline.render(self.context, now)
 
-        new_img = Image.frombuffer("RGBA", (WIDTH, HEIGHT),
+        new_img = Image.frombuffer("RGBA", self.size,
                                    self.surface.get_data(),
                                    "raw","BGRA", 0, 1)
         new_tk_img = ImageTk.PhotoImage(new_img)

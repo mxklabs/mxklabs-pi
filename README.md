@@ -32,6 +32,9 @@ with some additional dependencies:
 * Install six (a python 2/3 compatibility library):
  pi@raspberrypi:~$ sudo python3 -m pip install --upgrade six
 
+* Install dotmap (a library for dealing with dictionaries):
+ pi@raspberrypi:~$ sudo python3 -m pip install --upgrade dotmap
+
 * Install [Cairo](https://cairographics.org/):
  pi@raspberrypi:~$ sudo python3 -m pip install --upgrade cairocffi
 
