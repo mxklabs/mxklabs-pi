@@ -5,6 +5,7 @@ import dotmap
 
 import common
 import testplugin
+import quickstart
 
 cfg = dotmap.DotMap(
 {
@@ -95,6 +96,6 @@ cfg = dotmap.DotMap(
 
     'plugins':
     [
-        testplugin.TestPlugin()
+        quickstart.GoogleCalendar()
     ]
 })
