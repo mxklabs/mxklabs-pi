@@ -12,12 +12,11 @@ class TestPlugin(timelineplugin.TimelinePlugin):
         now = datetime.datetime.now()
         return [timelineplugin.TimelineItem(
             id=0,
-            start=now + datetime.timedelta(minutes=10),
-            end=now + datetime.timedelta(minutes=30))]
+            start=now.replace(hour=20, minute=0, second=0, microsecond=0),
+            end=now.replace(hour=21, minute=0, second=0, microsecond=0))]
 
     def render_on_clockface(self, cairo_context, timeline_item, point_generator, line_generator):
 
-        assert(isinstance(arc, common.ArcParams))
         points = line_generator(timeline_item.start(), timeline_item.end())
 
         assert(len(points)>=2)
@@ -25,7 +24,7 @@ class TestPlugin(timelineplugin.TimelinePlugin):
         for point in points[1:]:
             cairo_context.line_to(*point)
 
-        cairo_context.arc(*arc.centre, arc.radius, arc.start_angle, arc.end_angle)
+        #cairo_context.arc(*arc.centre, arc.radius, arc.start_angle, arc.end_angle)
         cairo_context.set_source_rgba(1,0,0,1)
         cairo_context.set_line_width(10)
         cairo_context.set_dash([],0)
