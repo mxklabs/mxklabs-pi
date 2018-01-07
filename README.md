@@ -43,6 +43,7 @@ with some additional dependencies:
 
 * Install the TkInter imaging module:
  pi@raspberrypi:~$ sudo apt-get install python3-pil.imagetk
+ pi@raspberrypi:~$ sudo apt-get install gir1.2-webkit-3.0
 
 ## Installing this software (mxklabs-pi)
 
@@ -59,7 +60,7 @@ manually start the application as follows:
 ## Configuring mxklabs-pi software
 
 If you're planning to use the Google Calendar API feature then you'll need to
-download a `client_secret.json` to `/home/pi/mxklabs-pi/client_secret.json`
+download a `client_secret.json` to `/home/pi/mxklabs-pi/credentials/google-api/client_secret.json`
 (follow [this guide](https://developers.google.com/google-apps/calendar/quickstart/python)).
 Note that this application was developed to stay within Google's free tier
 quotas; there's no need to add a billing account.

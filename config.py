@@ -3,9 +3,7 @@ import datetime
 import cairocffi as cairo
 import dotmap
 
-import common
-import testplugin
-import quickstart
+import plugins.googlecalendarplugin
 
 cfg = dotmap.DotMap(
 {
@@ -96,6 +94,8 @@ cfg = dotmap.DotMap(
 
     'plugins':
     [
-        quickstart.GoogleCalendar()
+        {
+            'type' : plugins.googlecalendarplugin.GoogleCalendarPlugin
+        }
     ]
 })

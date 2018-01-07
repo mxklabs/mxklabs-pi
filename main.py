@@ -9,17 +9,13 @@ import collections
 import datetime
 import math
 import time
-
 from tkinter import Tk, Label
-from PIL import Image, ImageTk
 
 import cairocffi as cairo
-
-import common
-import testplugin
-import timelineplugin
+from PIL import Image, ImageTk
 
 from config import cfg
+import plugins.plugin
 
 BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
     "height"])
@@ -163,8 +159,8 @@ class Clock(object):
 
 class Timeline(object):
 
-    def __init__(self, bounding_box):
-
+    def __init__(self, bounding_box, plugins):
+        self._plugins = plugins
         self._bb = CairoUtils.get_square_box(
             CairoUtils.get_margin_box(
                 bounding_box=bounding_box,
@@ -279,9 +275,9 @@ class Timeline(object):
 
             i += 1
 
-        for plugin in cfg.plugins: \
+        for p in self._plugins: \
 
-            assert (isinstance(plugin, timelineplugin.TimelinePlugin))
+            assert (isinstance(p, plugins.plugin.Plugin))
 
             plugin_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
 
@@ -299,16 +295,19 @@ class Timeline(object):
 
                 return self.get_spiral_points(plugin_spiral_params, from_t, to_t)
 
-            timeline_items = plugin.get_timeline_items(now, now + cfg.timeline.length)
+            timeline_items = p.get_timeline_items(now, now + cfg.timeline.length)
 
             for timeline_item in timeline_items:
-                assert(isinstance(timeline_item, timelineplugin.TimelineItem))
-                plugin.render_on_clockface(context, timeline_item, spiral_point_generator, spiral_points_generator)
+                assert(isinstance(timeline_item, plugin.TimelineItem))
+                p.render_on_clockface(context, timeline_item, spiral_point_generator, spiral_points_generator)
 
 
 class ExampleGui(Tk):
     def __init__(self, debug, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+        self._plugins = [plugin.type() for plugin in cfg.plugins]
 
         if not debug:
             super().attributes("-fullscreen", True)
@@ -339,7 +338,7 @@ class ExampleGui(Tk):
 
 
         self._clock = Clock(bounding_box)
-        self._timeline = Timeline(bounding_box)
+        self._timeline = Timeline(bounding_box, self._plugins)
 
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))

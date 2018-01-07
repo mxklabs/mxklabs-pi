@@ -3,7 +3,7 @@ import datetime
 import six
 
 class TimelineItem(object):
-    """ Object used to describe an item on a timeline. """
+    """ Object used to represent an item on a timeline. """
 
     def __init__(self, id, start, end):
         """
@@ -30,8 +30,8 @@ class TimelineItem(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class TimelinePlugin(object):
-    """ An abstract base class for timeline augmentation. """
+class Plugin(object):
+    """ An abstract base class for a plugin. """
 
     @abc.abstractmethod
     def get_timeline_items(self, start, end):
@@ -43,6 +43,7 @@ class TimelinePlugin(object):
         """
         pass
 
+    @abc.abstractmethod
     def render_on_clockface(self, cairo_context, timeline_item, point_generator, line_generator):
         """
         Render the item on an arc.
