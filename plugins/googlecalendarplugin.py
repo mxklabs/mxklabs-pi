@@ -12,7 +12,10 @@ import os
 
 import cairocffi as cairo
 
-import plugins.plugin
+try:
+    import plugins.plugin as plugin
+except ImportError:
+    import plugin
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
@@ -21,26 +24,24 @@ CLIENT_SECRET_FILE = 'credentials/google-api/client_secret.json'
 APPLICATION_NAME = 'mxklabs-pi'
 
 
-class GoogleCalendarTimelineItem(plugins.plugin.TimelineItem):
+class GoogleCalendarTimelineItem(plugin.TimelineItem):
 
     def __init__(self, event):
         self._event = event
         datetime_format = '%Y-%m-%dT%H:%M:%SZ'
-        plugins.plugin.TimelineItem.__init__(self,
+        plugin.TimelineItem.__init__(self,
                                      self._event['id'],
                                      datetime.datetime.strptime(self._event['start']['dateTime'], datetime_format),
                                      datetime.datetime.  strptime(self._event['end']['dateTime'], datetime_format))
 
 
-class GoogleCalendarPlugin(plugins.plugin.Plugin):
+class GoogleCalendarPlugin(plugin.Plugin):
 
-    def __init__(self, argparse_results=None):
+    def __init__(self):
         self._last_event_retrieval_time = None
         self._events = []
-        
-        self._argparse_results = argparse_results
 
-        plugins.plugin.Plugin.__init__(self)
+        plugin.Plugin.__init__(self)
 
     def get_credentials(self):
         """Gets valid user credentials from storage.
@@ -51,6 +52,10 @@ class GoogleCalendarPlugin(plugins.plugin.Plugin):
         Returns:
             Credentials, the obtained credential.
         """
+        # Fake parseargs.
+        parser = argparse.ArgumentParser(parents=[oauth2client.tools.argparser])
+        flags = parser.parse_args([])
+
         home_dir = os.path.expanduser('~')
         credential_dir = os.path.join(home_dir, 'credentials', 'google-api')
 
@@ -67,7 +72,7 @@ class GoogleCalendarPlugin(plugins.plugin.Plugin):
             flow = oauth2client.client.flow_from_clientsecrets(CLIENT_SECRET_FILE,
                                                   SCOPES)
             flow.user_agent = APPLICATION_NAME
-            credentials = oauth2client.tools.run_flow(flow, store, self._argparse_results )
+            credentials = oauth2client.tools.run_flow(flow, store, flags)
 
             print('Storing credentials to ' + credential_path)
 
@@ -124,8 +129,7 @@ class GoogleCalendarPlugin(plugins.plugin.Plugin):
 
 
 if __name__ == '__main__':
-    argparse_results = argparse.ArgumentParser(parents=[oauth2client.tools.argparser]).parse_args()
-    plugin = GoogleCalendarPlugin(argparse_results=argparse_results)
+    plugin = GoogleCalendarPlugin()
     plugin.get_credentials()
     print("Done!")
 
