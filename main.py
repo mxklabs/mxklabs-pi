@@ -307,7 +307,7 @@ class ExampleGui(Tk):
         super().__init__(*args, **kwargs)
 
 
-        self._plugins = [plugin.type() for plugin in cfg.plugins]
+        self._plugins = [plugin.type(plugin.config) for plugin in cfg.plugins]
 
         if not debug:
             super().attributes("-fullscreen", True)
@@ -337,9 +337,10 @@ class ExampleGui(Tk):
             height=440)
 
 
-        self._clock = Clock(bounding_box)
-        self._timeline = Timeline(bounding_box, self._plugins)
 
+        self._timeline = Timeline(bounding_box, self._plugins)
+        self._clock = Clock(bounding_box)
+        
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 

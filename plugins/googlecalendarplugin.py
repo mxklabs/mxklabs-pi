@@ -39,7 +39,8 @@ class GoogleCalendarTimelineItem(plugin.TimelineItem):
 
 class GoogleCalendarPlugin(plugin.Plugin):
 
-    def __init__(self):
+    def __init__(self, config):
+        self._config = config
         self._last_event_retrieval_time = None
         self._events = []
 
@@ -85,7 +86,7 @@ class GoogleCalendarPlugin(plugin.Plugin):
         now = datetime.datetime.now()
 
         if self._last_event_retrieval_time is None or \
-                (now - self._last_event_retrieval_time).total_seconds() > 120:
+                (now - self._last_event_retrieval_time).total_seconds() > self._config.update_frequency_in_seconds:
 
             print("RETRIEVING CALENDAR EVENTS FROM GOOGLE")
             self._last_event_retrieval_time = now
