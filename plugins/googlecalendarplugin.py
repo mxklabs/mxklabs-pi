@@ -3,17 +3,14 @@ from __future__ import print_function
 import argparse
 import datetime
 import httplib2
+import oauth2client.client
+import oauth2client.tools
+import oauth2client.file
 import os
-
-from apiclient import discovery
-from oauth2client import client
-from oauth2client import tools
-from oauth2client.file import Storage
 
 
 
 import cairocffi as cairo
-import dotmap
 
 import plugin
 
@@ -37,13 +34,15 @@ class GoogleCalendarTimelineItem(plugin.TimelineItem):
 
 class GoogleCalendarPlugin(plugin.Plugin):
 
-    def __init__(self):
+    def __init__(self, argparse_results):
         self._last_event_retrieval_time = None
         self._events = []
+        
+        self._argparse_results = argparse_results
+        
         plugin.Plugin.__init__(self)
 
-    @staticmethod
-    def get_credentials(oauth_flags=None):
+    def get_credentials(self):
         """Gets valid user credentials from storage.
 
         If nothing has been stored, or if the stored credentials are invalid,
@@ -61,14 +60,14 @@ class GoogleCalendarPlugin(plugin.Plugin):
         credential_path = os.path.join(credential_dir,
                                        'google-api-saved-credentials.json')
 
-        store = Storage(credential_path)
+        store = oauth2client.file.Storage(credential_path)
         credentials = store.get()
 
         if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE,
+            flow = oauth2client.client.flow_from_clientsecrets(CLIENT_SECRET_FILE,
                                                   SCOPES)
             flow.user_agent = APPLICATION_NAME
-            credentials = tools.run_flow(flow, store, flags)
+            credentials = oauth2client.tools.run_flow(flow, store, self._argparse_results )
 
             print('Storing credentials to ' + credential_path)
 
@@ -88,7 +87,7 @@ class GoogleCalendarPlugin(plugin.Plugin):
 
             now = datetime.datetime.utcnow().isoformat() + 'Z'
             http = credentials.authorize(httplib2.Http())
-            service = discovery.build('calendar', 'v3', http=http)
+            service = oauth2client.discovery.build('calendar', 'v3', http=http)
 
             # 'Z' indicates UTC time
             #print('Getting the upcoming 10 events')
@@ -125,9 +124,9 @@ class GoogleCalendarPlugin(plugin.Plugin):
 
 
 if __name__ == '__main__':
-
-    oauth_flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-    credentials = GoogleCalendarPlugin.get_credentials(oauth_flags=oauth_flags)
+    argparse_results = argparse.ArgumentParser(parents=[oauth2client.tools.argparser]).parse_args()
+    plugin = GoogleCalendarPlugin(argparse_results=argparse_results)
+    plugin.get_credentials()
     print("Done!")
 
 
