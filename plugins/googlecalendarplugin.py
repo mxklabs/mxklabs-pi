@@ -28,11 +28,13 @@ class GoogleCalendarTimelineItem(plugin.TimelineItem):
 
     def __init__(self, event):
         self._event = event
+
         datetime_format = '%Y-%m-%dT%H:%M:%SZ'
-        plugin.TimelineItem.__init__(self,
-                                     self._event['id'],
-                                     datetime.datetime.strptime(self._event['start']['dateTime'], datetime_format),
-                                     datetime.datetime.  strptime(self._event['end']['dateTime'], datetime_format))
+        id = self._event['id']
+        start_datetime = datetime.datetime.strptime(self._event['start']['dateTime'], datetime_format)
+        end_datetime = datetime.datetime.strptime(self._event['end']['dateTime'], datetime_format)
+
+        plugin.TimelineItem.__init__(self, id, start_datetime, end_datetime)
 
 
 class GoogleCalendarPlugin(plugin.Plugin):
@@ -83,7 +85,7 @@ class GoogleCalendarPlugin(plugin.Plugin):
         now = datetime.datetime.now()
 
         if self._last_event_retrieval_time is None or \
-                (self._last_event_retrieval_time - now).total_seconds() > 120:
+                (now - self._last_event_retrieval_time).total_seconds() > 120:
 
             print("RETRIEVING CALENDAR EVENTS FROM GOOGLE")
             self._last_event_retrieval_time = now
