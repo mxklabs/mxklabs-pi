@@ -95,7 +95,7 @@ cfg = dotmap.DotMap(
     'plugins':
     [
         {
-            'type' : plugins.googlecalendarplugin.GoogleCalendarPlugin,
+            'plugin' : plugins.googlecalendarplugin.GoogleCalendarPlugin,
             'config' :
             {
                 'update_frequency_in_seconds' : 120
