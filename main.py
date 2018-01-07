@@ -298,7 +298,7 @@ class Timeline(object):
             timeline_items = p.get_timeline_items(now, now + cfg.timeline.length)
 
             for timeline_item in timeline_items:
-                assert(isinstance(timeline_item, plugin.TimelineItem))
+                assert(isinstance(timeline_item, plugins.plugin.TimelineItem))
                 p.render_on_clockface(context, timeline_item, spiral_point_generator, spiral_points_generator)
 
 

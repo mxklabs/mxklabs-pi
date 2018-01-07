@@ -3,16 +3,16 @@ from __future__ import print_function
 import argparse
 import datetime
 import httplib2
+import apiclient
 import oauth2client.client
-import oauth2client.tools
 import oauth2client.file
+import oauth2client.tools
+
 import os
-
-
 
 import cairocffi as cairo
 
-import plugin
+import plugins.plugin
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
@@ -21,26 +21,26 @@ CLIENT_SECRET_FILE = 'credentials/google-api/client_secret.json'
 APPLICATION_NAME = 'mxklabs-pi'
 
 
-class GoogleCalendarTimelineItem(plugin.TimelineItem):
+class GoogleCalendarTimelineItem(plugins.plugin.TimelineItem):
 
     def __init__(self, event):
         self._event = event
         datetime_format = '%Y-%m-%dT%H:%M:%SZ'
-        plugin.TimelineItem.__init__(self,
+        plugins.plugin.TimelineItem.__init__(self,
                                      self._event['id'],
                                      datetime.datetime.strptime(self._event['start']['dateTime'], datetime_format),
                                      datetime.datetime.  strptime(self._event['end']['dateTime'], datetime_format))
 
 
-class GoogleCalendarPlugin(plugin.Plugin):
+class GoogleCalendarPlugin(plugins.plugin.Plugin):
 
-    def __init__(self, argparse_results):
+    def __init__(self, argparse_results=None):
         self._last_event_retrieval_time = None
         self._events = []
         
         self._argparse_results = argparse_results
-        
-        plugin.Plugin.__init__(self)
+
+        plugins.plugin.Plugin.__init__(self)
 
     def get_credentials(self):
         """Gets valid user credentials from storage.
@@ -83,11 +83,11 @@ class GoogleCalendarPlugin(plugin.Plugin):
             print("RETRIEVING CALENDAR EVENTS FROM GOOGLE")
             self._last_event_retrieval_time = now
 
-            credentials = GoogleCalendarPlugin.get_credentials()
+            credentials = self.get_credentials()
 
             now = datetime.datetime.utcnow().isoformat() + 'Z'
             http = credentials.authorize(httplib2.Http())
-            service = oauth2client.discovery.build('calendar', 'v3', http=http)
+            service = apiclient.discovery.build('calendar', 'v3', http=http)
 
             # 'Z' indicates UTC time
             #print('Getting the upcoming 10 events')
