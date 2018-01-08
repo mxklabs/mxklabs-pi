@@ -1,18 +1,14 @@
-# For python3, linux I did:
-# pip install Pillow
-# apt-get install python3-tk
-# apt-get install python3-cairo
-# pip install cairocffi
-
 import argparse
 import collections
 import datetime
 import math
+import os
 import time
-from tkinter import Tk, Label
+import tkinter
 
 import cairocffi as cairo
-from PIL import Image, ImageTk
+import PIL.Image
+import PIL.ImageTk
 
 from config import cfg as config
 
@@ -68,9 +64,6 @@ class CairoUtils(object):
         """ Return bounding box with margin removed. """
         print(bounding_box)
         bb = bounding_box
-        print(bb)
-        print(bb.left)
-        print(margin)
         result = BoundingBox(
             left=bb.left + margin,
             top=bb.top + margin,
@@ -303,7 +296,7 @@ class Timeline(object):
                 p.render_on_clockface(context, timeline_item, spiral_point_generator, spiral_points_generator)
 
 
-class ExampleGui(Tk):
+class ExampleGui(tkinter.Tk):
     def __init__(self, debug, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -345,7 +338,7 @@ class ExampleGui(Tk):
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
 
-        self.label = Label(self)
+        self.label = tkinter.Label(self)
         self.label.pack(expand=True, fill="both")
 
         while True:
@@ -369,10 +362,10 @@ class ExampleGui(Tk):
         self._clock.render(self.context, now)
         self._timeline.render(self.context, now)
 
-        new_img = Image.frombuffer("RGBA", self.size,
+        new_img = PIL.Image.frombuffer("RGBA", self.size,
                                    self.surface.get_data(),
                                    "raw","BGRA", 0, 1)
-        new_tk_img = ImageTk.PhotoImage(new_img)
+        new_tk_img = PIL.ImageTk.PhotoImage(new_img)
 
         self.label.configure(image=new_tk_img)
         self.label.image = new_tk_img
@@ -387,9 +380,15 @@ if __name__ == "__main__":
     code a little. Start this file with command-line argument '--mode debug' to
     avoid going in fullscreen mode and to avoid hiding the cursor.
     """
+
+    # Set current directory to main.py's directory.
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+
+    # Proccess command-line arguments.
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=['release', 'debug', 'auth'], default='release')
-
     args = parser.parse_args()
 
     if args.mode == 'auth':
