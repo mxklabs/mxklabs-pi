@@ -14,7 +14,8 @@ from tkinter import Tk, Label
 import cairocffi as cairo
 from PIL import Image, ImageTk
 
-from config import cfg
+from config import cfg as config
+
 import plugins.plugin
 
 BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
@@ -100,7 +101,7 @@ class Clock(object):
     def __init__(self, bounding_box):
         margin_bb = CairoUtils.get_margin_box(
             bounding_box=bounding_box,
-            margin=cfg.clock.margin)
+            margin=config.clock.margin)
         self._real_bb = CairoUtils.get_square_box(margin_bb)
         self._unit = self._real_bb.width
 
@@ -117,17 +118,17 @@ class Clock(object):
             for i in range(0, 60):
 
                 if (i % 5) == 0:
-                    tick_params = cfg.clock.hour_ticks
+                    tick_params = config.clock.hour_ticks
                 else:
-                    tick_params = cfg.clock.minute_ticks
+                    tick_params = config.clock.minute_ticks
 
                 self.draw_tick(context, i, 60, tick_params)
 
             # Draw hour hand.
-            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, cfg.clock.hour_hand)
+            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, config.clock.hour_hand)
 
             # Draw minute hand.
-            self.draw_hand(context, now.minute, 60, cfg.clock.minute_hand)
+            self.draw_hand(context, now.minute, 60, config.clock.minute_hand)
 
     def draw_tick(self, context, num, den, params):
 
@@ -164,7 +165,7 @@ class Timeline(object):
         self._bb = CairoUtils.get_square_box(
             CairoUtils.get_margin_box(
                 bounding_box=bounding_box,
-                margin=cfg.timeline.margin))
+                margin=config.timeline.margin))
         self._unit = self._bb.width
         self._centre = (self._bb.left + self._bb.width / 2,
                         self._bb.top + self._bb.height / 2)
@@ -183,8 +184,8 @@ class Timeline(object):
         where t=0 is closest to the edge of the clock face and every increment
         of 2*math.pi corresponds to one rotation of the clock face.
         """
-        margin = cfg.timeline.margin
-        thickness = cfg.timeline.thickness
+        margin = config.timeline.margin
+        thickness = config.timeline.thickness
 
         start_angle = self.datetime_to_t(now)
         max_radius = (self._unit / 2) - margin - offset
@@ -224,8 +225,8 @@ class Timeline(object):
     def render(self, context, now):
 
         #context.translate(*self._centre)
-        thickness = cfg.timeline.thickness
-        length = cfg.timeline.length
+        thickness = config.timeline.thickness
+        length = config.timeline.length
 
         t_min = 0
         t_max = (length.total_seconds() / (12 * 60 * 60)) * 2 * math.pi
@@ -236,7 +237,7 @@ class Timeline(object):
         separator_spiral_params = self.get_spiral_params(offset=thickness, now=now)
         separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
         CairoUtils.move_to_points(context, separator_spiral_points)
-        CairoUtils.set_stroke_params(context, cfg.timeline.stroke)
+        CairoUtils.set_stroke_params(context, config.timeline.stroke)
         context.stroke()
 
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
@@ -295,7 +296,7 @@ class Timeline(object):
 
                 return self.get_spiral_points(plugin_spiral_params, from_t, to_t)
 
-            timeline_items = p.get_timeline_items(now, now + cfg.timeline.length)
+            timeline_items = p.get_timeline_items(now, now + config.timeline.length)
 
             for timeline_item in timeline_items:
                 assert(isinstance(timeline_item, plugins.plugin.TimelineItem))
@@ -307,13 +308,13 @@ class ExampleGui(Tk):
         super().__init__(*args, **kwargs)
 
 
-        self._plugins = [plugin.plugin(plugin.config) for plugin in cfg.plugins]
+        self._plugins = [plugin.plugin(plugin.config) for plugin in config.plugins]
 
         if not debug:
             super().attributes("-fullscreen", True)
             super().config(cursor="none")
 
-        self.size = cfg.window.width, cfg.window.height
+        self.size = config.window.width, config.window.height
 
         self.geometry("{}x{}".format(*self.size))
 
@@ -360,7 +361,7 @@ class ExampleGui(Tk):
         self.context.set_operator(cairo.constants.OPERATOR_OVER)
 
         self.context.rectangle(0, 0, *self.size)
-        self.context.set_source_rgba(*cfg.window.background_colour)
+        self.context.set_source_rgba(*config.window.background_colour)
         self.context.fill()
 
         #self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
@@ -387,8 +388,14 @@ if __name__ == "__main__":
     avoid going in fullscreen mode and to avoid hiding the cursor.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', choices=['release', 'debug'], default='release')
+    parser.add_argument('--mode', choices=['release', 'debug', 'auth'], default='release')
 
     args = parser.parse_args()
 
-    ExampleGui(debug=(args.mode == 'debug'))
+    if args.mode == 'auth':
+        for plugin in config.plugins:
+            p = plugin.plugin(plugin.config)
+            if hasattr(p, 'auth'):
+                p.authenticate()
+    else:
+        ExampleGui(debug=(args.mode == 'debug'))

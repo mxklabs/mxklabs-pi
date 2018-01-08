@@ -98,6 +98,10 @@ cfg = dotmap.DotMap(
             'plugin' : plugins.googlecalendarplugin.GoogleCalendarPlugin,
             'config' :
             {
+                'scope' : 'https://www.googleapis.com/auth/calendar.readonly',
+                'client_secret_file' : './credentials/google-api/client_secret.json',
+                'saved_credentials_file' : './credentials/google-api/saved_credentials.json',
+                'application_name' : 'mxklabs-pi',
                 'update_frequency_in_seconds' : 120
             }
         }
