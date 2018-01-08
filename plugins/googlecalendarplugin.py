@@ -93,6 +93,9 @@ class GoogleCalendarPlugin(plugin.Plugin):
 
             credentials = self.get_credentials()
 
+            start_in = start.isoformat() + 'Z'
+            end_in = end.isoformat() + 'Z'
+
             now = datetime.datetime.utcnow().isoformat() + 'Z'
             http = credentials.authorize(httplib2.Http())
             service = apiclient.discovery.build('calendar', 'v3', http=http)
@@ -103,7 +106,7 @@ class GoogleCalendarPlugin(plugin.Plugin):
             # calendars = service.calendars.list()
 
             eventsResult = service.events().list(
-                calendarId='primary', timeMin=now, maxResults=10,
+                calendarId='primary', timeMin=start_in, timeMax=end_in, maxResults=10,
                 singleEvents=True,
                 orderBy='startTime').execute()
 
