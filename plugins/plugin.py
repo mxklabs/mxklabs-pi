@@ -2,36 +2,43 @@ import abc
 import datetime
 import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class TimelineItem(object):
     """ Object used to represent an item on a timeline. """
 
-    def __init__(self, id, start, end):
+    def __init__(self):
         """
         Constructs a TimelineItem.
-        :param id: Some kind of unique identifier for the event.
-        :param start: The start time (must be datetime).
-        :param end: The end time (must be datetime).
         """
-        assert(isinstance(start, datetime.datetime))
-        assert(isinstance(end, datetime.datetime))
+        pass
 
-        self._id = id
-        self._start = start
-        self._end = end
-
+    @abc.abstractmethod
     def id(self):
-        return self._id
+        pass
 
+    @abc.abstractmethod
     def start(self):
-        return self._start
+        pass
 
+    @abc.abstractmethod
     def end(self):
-        return self._end
+        pass
 
 
 @six.add_metaclass(abc.ABCMeta)
 class Plugin(object):
     """ An abstract base class for a plugin. """
+
+    @abc.abstractmethod
+    def start(self):
+        """ Start any active component within the plugin. """
+        pass
+
+    @abc.abstractmethod
+    def stop(self):
+        """ Stop any active component within the plugin. """
+        pass
 
     @abc.abstractmethod
     def get_timeline_items(self, start, end):

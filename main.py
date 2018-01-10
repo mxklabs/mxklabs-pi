@@ -303,6 +303,9 @@ class ExampleGui(tkinter.Tk):
 
         self._plugins = [plugin.plugin(plugin.config) for plugin in config.plugins]
 
+        for p in self._plugins:
+            p.start()
+
         if not debug:
             super().attributes("-fullscreen", True)
             super().config(cursor="none")
@@ -341,11 +344,20 @@ class ExampleGui(tkinter.Tk):
         self.label = tkinter.Label(self)
         self.label.pack(expand=True, fill="both")
 
-        while True:
-            self.render()
-            self.update_idletasks()
-            self.update()
-            time.sleep(5)
+        try:
+            while True:
+                self.render()
+                self.update_idletasks()
+                self.update()
+                time.sleep(5)
+
+        except KeyboardInterrupt:
+            print("")
+            print("Stopping all plugins.")
+            for p in self._plugins:
+                p.stop()
+            print("Exiting.")
+
 
     def render(self):
 

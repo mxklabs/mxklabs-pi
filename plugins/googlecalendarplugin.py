@@ -8,6 +8,8 @@ import oauth2client.client
 import oauth2client.file
 import oauth2client.tools
 import os
+import threading
+import time
 
 import cairocffi as cairo
 
@@ -16,15 +18,25 @@ import plugins.plugin as plugin
 
 class GoogleCalendarTimelineItem(plugin.TimelineItem):
 
+    STRPTIME_FMT = '%Y-%m-%dT%H:%M:%SZ'
+
     def __init__(self, event):
         self._event = event
+        plugin.TimelineItem.__init__(self)
 
-        datetime_format = '%Y-%m-%dT%H:%M:%SZ'
-        id = self._event['id']
-        start_datetime = datetime.datetime.strptime(self._event['start']['dateTime'], datetime_format)
-        end_datetime = datetime.datetime.strptime(self._event['end']['dateTime'], datetime_format)
+    def id(self):
+        return self._event['id']
 
-        plugin.TimelineItem.__init__(self, id, start_datetime, end_datetime)
+    def start(self):
+        return datetime.datetime.strptime(self._event['start']['dateTime'],
+                                          GoogleCalendarTimelineItem.STRPTIME_FMT)
+
+    def end(self):
+        return datetime.datetime.strptime(self._event['end']['dateTime'],
+                                          GoogleCalendarTimelineItem.STRPTIME_FMT)
+
+    def event(self):
+        return self._event
 
 
 class GoogleCalendarPlugin(plugin.Plugin):
@@ -33,7 +45,8 @@ class GoogleCalendarPlugin(plugin.Plugin):
         self._config = config
         self._last_event_retrieval_time = None
         self._events = []
-
+        self._thread = threading.Thread(target=self.run)
+        self._thread_stop = threading.Event()
         plugin.Plugin.__init__(self)
 
     def authenticate(self):
@@ -62,6 +75,8 @@ class GoogleCalendarPlugin(plugin.Plugin):
             print('Storing credentials to ' + self._config.saved_credentials_file)
 
         return credentials
+
+
 
     def get_timeline_items(self, start, end):
 
@@ -103,6 +118,8 @@ class GoogleCalendarPlugin(plugin.Plugin):
 
         points = line_generator(timeline_item.start(), timeline_item.end())
 
+        print(timeline_item.event())
+
         assert(len(points)>=2)
         cairo_context.move_to(*points[0])
         for point in points[1:]:
@@ -114,6 +131,19 @@ class GoogleCalendarPlugin(plugin.Plugin):
         cairo_context.set_dash([],0)
         cairo_context.set_line_cap(cairo.constants.LINE_CAP_ROUND)
         cairo_context.stroke()
+
+    def run(self):
+        while not self._thread_stop.is_set():
+            print("Hi")
+            self._thread_stop.wait(5)
+
+    def start(self):
+        self._thread.start()
+
+    def stop(self):
+        self._thread_stop.set()
+        self._thread.join()
+
 
 
 
