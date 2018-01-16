@@ -19,10 +19,12 @@ class TimelineItem(object):
 
     @abc.abstractmethod
     def start(self):
+        """ Return the start of the event (either a datetime or a date object). """
         pass
 
     @abc.abstractmethod
     def end(self):
+        """ Return the start of the event (either a datetime or a date object). """
         pass
 
 

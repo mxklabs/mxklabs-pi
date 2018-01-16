@@ -80,8 +80,8 @@ cfg = dotmap.DotMap(
     'timeline' :
     {
         'margin' :  0,
-        'thickness' : 25,
-        'length' : datetime.timedelta(hours=48),
+        'thickness' : 15,
+        'length' : datetime.timedelta(hours=96),
 
         'stroke':
         {
