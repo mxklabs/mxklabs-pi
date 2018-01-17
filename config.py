@@ -81,7 +81,7 @@ cfg = dotmap.DotMap(
     {
         'margin' :  0,
         'thickness' : 15,
-        'length' : datetime.timedelta(hours=96),
+        'length' : datetime.timedelta(hours=24*7),
 
         'stroke':
         {
