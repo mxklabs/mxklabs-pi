@@ -25,6 +25,14 @@ class CairoUtils(object):
         context.set_source_rgba(*fill_params.colour)
 
     @staticmethod
+    def set_text_params(context, text_params):
+        """ Set context to text_params. """
+        context.set_source_rgba(*text_params.colour)
+        context.set_font_size(text_params.font_size)
+        font_face = context.select_font_face(*text_params.font_face)
+        context.set_font_face(font_face)
+
+    @staticmethod
     def set_stroke_params(context, stroke_params):
         """ Set context to stroke_params. """
         context.set_source_rgba(*stroke_params.colour)
@@ -217,7 +225,6 @@ class Timeline(object):
 
     def render(self, context, now):
 
-        #context.translate(*self._centre)
         thickness = config.timeline.thickness
         length = config.timeline.length
 
@@ -237,7 +244,6 @@ class Timeline(object):
 
         # Find next
         floored_now = now.replace(hour=now.hour//3*3, minute=0, second=0, microsecond=0)
-        print("floored_now={}".format(floored_now))
 
         context.set_font_size(10)
 
@@ -295,6 +301,24 @@ class Timeline(object):
                 assert(isinstance(timeline_item, plugins.plugin.TimelineItem))
                 p.render_on_clockface(context, timeline_item, spiral_point_generator, spiral_points_generator)
 
+class EventList(object):
+
+    def __init__(self, config):
+        self._config = config
+
+    def render(self, context):
+
+        CairoUtils.set_text_params(context, self._config.heading.text)
+
+        text = self._config.heading.label
+        _, _, _, h, _, _ = context.text_extents(text)
+        context.move_to(self._config.bounding_box.left, self._config.bounding_box.top + h)
+
+
+        context.show_text(text)
+        pass
+
+
 
 class ExampleGui(tkinter.Tk):
     def __init__(self, debug, *args, **kwargs):
@@ -337,6 +361,7 @@ class ExampleGui(tkinter.Tk):
 
         self._timeline = Timeline(bounding_box, self._plugins)
         self._clock = Clock(bounding_box)
+        self._event_list = EventList(config.event_list)
 
         #self.render()
         #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
@@ -371,8 +396,9 @@ class ExampleGui(tkinter.Tk):
 
         #self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
 
-        self._clock.render(self.context, now)
         self._timeline.render(self.context, now)
+        self._clock.render(self.context, now)
+        self._event_list.render(self.context)
 
         new_img = PIL.Image.frombuffer("RGBA", self.size,
                                    self.surface.get_data(),

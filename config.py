@@ -92,6 +92,29 @@ cfg = dotmap.DotMap(
         }
     },
 
+    'event_list' :
+    {
+        'bounding_box' :
+        {
+            'left' : 480,
+            'top' : 0,
+            'width' : 320,
+            'height' : 480
+        },
+
+        'heading' :
+        {
+            'label' : 'Test label',
+            'height' : 30,
+            'text' :
+            {
+                'colour' : (1, 1, 1, 1),
+                'font_size' : 20,
+                'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL)
+            }
+        }
+    },
+
     'plugins':
     [
         {
