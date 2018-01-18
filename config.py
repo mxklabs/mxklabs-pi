@@ -16,7 +16,13 @@ cfg = dotmap.DotMap(
 
     'clock' :
     {
-        'margin' : 0,
+        'bounding_box' :
+        {
+            'left' : 20,
+            'top' : 20,
+            'width' : 440,
+            'height' : 440
+        },
 
         'hour_ticks' :
         {
@@ -79,7 +85,13 @@ cfg = dotmap.DotMap(
 
     'timeline' :
     {
-        'margin' :  0,
+        'bounding_box' :
+        {
+            'left' : 20,
+            'top' : 20,
+            'width' : 440,
+            'height' : 440
+        },
         'thickness' : 15,
         'length' : datetime.timedelta(hours=24*7),
 
@@ -96,10 +108,10 @@ cfg = dotmap.DotMap(
     {
         'bounding_box' :
         {
-            'left' : 480,
-            'top' : 0,
+            'left' : 460,
+            'top' : 20,
             'width' : 320,
-            'height' : 480
+            'height' : 440
         },
 
         'heading' :

@@ -10,7 +10,7 @@ import cairocffi as cairo
 import PIL.Image
 import PIL.ImageTk
 
-from config import cfg as config
+from config import cfg
 
 import plugins.plugin
 
@@ -31,6 +31,15 @@ class CairoUtils(object):
         context.set_font_size(text_params.font_size)
         font_face = context.select_font_face(*text_params.font_face)
         context.set_font_face(font_face)
+
+    @staticmethod
+    def draw_text(context, text, text_location):
+        _, _, _, h, _, _ = context.text_extents(text)
+        new_text_location = (text_location[0], text_location[1] + h)
+        context.move_to(*new_text_location)
+        context.show_text(text)
+
+        return new_text_location
 
     @staticmethod
     def set_stroke_params(context, stroke_params):
@@ -99,12 +108,10 @@ class ContextRestorer(object):
 
 class Clock(object):
 
-    def __init__(self, bounding_box):
-        margin_bb = CairoUtils.get_margin_box(
-            bounding_box=bounding_box,
-            margin=config.clock.margin)
-        self._real_bb = CairoUtils.get_square_box(margin_bb)
-        self._unit = self._real_bb.width
+    def __init__(self, config):
+        self._config = config
+        self._bb = self._config.bounding_box
+        self._unit = self._bb.width
 
     def render(self, context, now):
 
@@ -112,24 +119,24 @@ class Clock(object):
 
             # Translate to middle of clock face.
             context.translate(
-                self._real_bb.left + self._real_bb.width / 2,
-                self._real_bb.top + self._real_bb.height / 2)
+                self._bb.left + self._bb.width / 2,
+                self._bb.top + self._bb.height / 2)
 
             # Draw ticks.
             for i in range(0, 60):
 
                 if (i % 5) == 0:
-                    tick_params = config.clock.hour_ticks
+                    tick_params = self._config.hour_ticks
                 else:
-                    tick_params = config.clock.minute_ticks
+                    tick_params = self._config.minute_ticks
 
                 self.draw_tick(context, i, 60, tick_params)
 
             # Draw hour hand.
-            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, config.clock.hour_hand)
+            self.draw_hand(context, now.hour * 60 + now.minute, 12 * 60, self._config.hour_hand)
 
             # Draw minute hand.
-            self.draw_hand(context, now.minute, 60, config.clock.minute_hand)
+            self.draw_hand(context, now.minute, 60, self._config.minute_hand)
 
     def draw_tick(self, context, num, den, params):
 
@@ -161,12 +168,10 @@ class Clock(object):
 
 class Timeline(object):
 
-    def __init__(self, bounding_box, plugins):
+    def __init__(self, config, plugins):
+        self._config = config
         self._plugins = plugins
-        self._bb = CairoUtils.get_square_box(
-            CairoUtils.get_margin_box(
-                bounding_box=bounding_box,
-                margin=config.timeline.margin))
+        self._bb = self._config.bounding_box
         self._unit = self._bb.width
         self._centre = (self._bb.left + self._bb.width / 2,
                         self._bb.top + self._bb.height / 2)
@@ -185,11 +190,10 @@ class Timeline(object):
         where t=0 is closest to the edge of the clock face and every increment
         of 2*math.pi corresponds to one rotation of the clock face.
         """
-        margin = config.timeline.margin
-        thickness = config.timeline.thickness
+        thickness = self._config.thickness
 
         start_angle = self.datetime_to_t(now)
-        max_radius = (self._unit / 2) - margin - offset
+        max_radius = (self._unit / 2) - offset
 
         # Parameter 'a' corresponds to minus one 'thickness' per rotation.
         a = -thickness / (2 * math.pi)
@@ -225,8 +229,8 @@ class Timeline(object):
 
     def render(self, context, now):
 
-        thickness = config.timeline.thickness
-        length = config.timeline.length
+        thickness = self._config.thickness
+        length = self._config.length
 
         t_min = 0
         t_max = (length.total_seconds() / (12 * 60 * 60)) * 2 * math.pi
@@ -237,7 +241,7 @@ class Timeline(object):
         separator_spiral_params = self.get_spiral_params(offset=thickness, now=now)
         separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
         CairoUtils.move_to_points(context, separator_spiral_points)
-        CairoUtils.set_stroke_params(context, config.timeline.stroke)
+        CairoUtils.set_stroke_params(context, self._config.stroke)
         context.stroke()
 
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
@@ -295,7 +299,7 @@ class Timeline(object):
 
                 return self.get_spiral_points(plugin_spiral_params, from_t, to_t)
 
-            timeline_items = p.get_timeline_items(now, now + config.timeline.length)
+            timeline_items = p.get_timeline_items(now, now + self._config.length)
 
             for timeline_item in timeline_items:
                 assert(isinstance(timeline_item, plugins.plugin.TimelineItem))
@@ -308,72 +312,56 @@ class EventList(object):
 
     def render(self, context):
 
-        CairoUtils.set_text_params(context, self._config.heading.text)
-
         text = self._config.heading.label
-        _, _, _, h, _, _ = context.text_extents(text)
-        context.move_to(self._config.bounding_box.left, self._config.bounding_box.top + h)
+        text_location = (self._config.bounding_box.left, self._config.bounding_box.top)
+        text_params = self._config.heading.text
 
+        CairoUtils.set_text_params(context, text_params)
+        text_location = CairoUtils.draw_text(context, text, text_location)
+        text_location = CairoUtils.draw_text(context, text, text_location)
+        text_location = CairoUtils.draw_text(context, text, text_location)
 
-        context.show_text(text)
+    def set_timeline_events(self):
         pass
 
 
+class MainWindow(tkinter.Tk):
 
-class ExampleGui(tkinter.Tk):
-    def __init__(self, debug, *args, **kwargs):
+    def __init__(self, config, debug, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
-        self._plugins = [plugin.plugin(plugin.config) for plugin in config.plugins]
-
-        for p in self._plugins:
-            p.start()
+        self._config = config
 
         if not debug:
             super().attributes("-fullscreen", True)
             super().config(cursor="none")
 
+
         self.size = config.window.width, config.window.height
-
         self.geometry("{}x{}".format(*self.size))
-
         self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *self.size)
         self.context = cairo.Context(self.surface)
 
-
-        # Draw something
-        #self.context.scale(w, h)
-
-        #self.context.set_source_rgba(1, 0, 0, 1)
-        #self.context.move_to(90, 140)
-        #self.context.rotate(-0.5)
-        #self.context.set_font_size(32)
-        #self.context.show_text(u'HAPPY DONUT!')
-
-        bounding_box = BoundingBox(
-            left=20,
-            top=20,
-            width=440,
-            height=440)
-
-
-
-        self._timeline = Timeline(bounding_box, self._plugins)
-        self._clock = Clock(bounding_box)
+        self._plugins = [plugin.plugin(plugin.config) for plugin in
+                         config.plugins]
+        self._timeline = Timeline(self._config.timeline, self._plugins)
         self._event_list = EventList(config.event_list)
-
-        #self.render()
-        #self._image_ref = ImageTk.PhotoImage(Image.frombuffer("RGBA", (w, h), self.surface.get_data(), "raw", "BGRA", 0, 1))
+        self._clock = Clock(self._config.clock)
 
         self.label = tkinter.Label(self)
         self.label.pack(expand=True, fill="both")
+
+
+        for p in self._plugins:
+            p.start()
 
         try:
             while True:
                 self.render()
                 self.update_idletasks()
                 self.update()
+
+
                 time.sleep(5)
 
         except KeyboardInterrupt:
@@ -391,7 +379,7 @@ class ExampleGui(tkinter.Tk):
         self.context.set_operator(cairo.constants.OPERATOR_OVER)
 
         self.context.rectangle(0, 0, *self.size)
-        self.context.set_source_rgba(*config.window.background_colour)
+        self.context.set_source_rgba(*self._config.window.background_colour)
         self.context.fill()
 
         #self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
@@ -430,9 +418,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode == 'auth':
-        for plugin in config.plugins:
+        for plugin in cfg.plugins:
             p = plugin.plugin(plugin.config)
             if hasattr(p, 'auth'):
                 p.authenticate()
     else:
-        ExampleGui(debug=(args.mode == 'debug'))
+        MainWindow(config=cfg, debug=(args.mode == 'debug'))
