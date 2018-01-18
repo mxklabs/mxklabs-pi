@@ -117,12 +117,12 @@ cfg = dotmap.DotMap(
         'heading' :
         {
             'label' : 'Test label',
-            'height' : 30,
             'text' :
             {
                 'colour' : (1, 1, 1, 1),
                 'font_size' : 20,
-                'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL)
+                'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
+                'height': 30
             }
         }
     },

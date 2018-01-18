@@ -14,9 +14,6 @@ from config import cfg
 
 import plugins.plugin
 
-BoundingBox = collections.namedtuple("BoundingBox", ["left","top","width",
-    "height"])
-
 class CairoUtils(object):
 
     @staticmethod
@@ -25,17 +22,13 @@ class CairoUtils(object):
         context.set_source_rgba(*fill_params.colour)
 
     @staticmethod
-    def set_text_params(context, text_params):
-        """ Set context to text_params. """
+    def draw_text(context, text, text_location, text_params):
         context.set_source_rgba(*text_params.colour)
         context.set_font_size(text_params.font_size)
         font_face = context.select_font_face(*text_params.font_face)
         context.set_font_face(font_face)
-
-    @staticmethod
-    def draw_text(context, text, text_location):
         _, _, _, h, _, _ = context.text_extents(text)
-        new_text_location = (text_location[0], text_location[1] + h)
+        new_text_location = (text_location[0], text_location[1] + text_params.height)
         context.move_to(*new_text_location)
         context.show_text(text)
 
@@ -63,30 +56,6 @@ class CairoUtils(object):
         elif params.stroke:
             CairoUtils.set_stroke_params(context, params.stroke)
             context.stroke()
-
-    @staticmethod
-    def get_square_box(bounding_box):
-        """ Return largest square in the bounding box """
-        bb = bounding_box
-        box_size = min(bb.width, bb.height)
-        result = BoundingBox(
-            left=bb.left + (bb.width - box_size) / 2,
-            top=bb.top + (bb.height - box_size) / 2,
-            width=box_size,
-            height=box_size)
-        return result
-
-    @staticmethod
-    def get_margin_box(bounding_box, margin):
-        """ Return bounding box with margin removed. """
-        print(bounding_box)
-        bb = bounding_box
-        result = BoundingBox(
-            left=bb.left + margin,
-            top=bb.top + margin,
-            width=bb.width - 2 * margin,
-            height=bb.height - 2 * margin)
-        return result
 
     @staticmethod
     def move_to_points(context, points):
@@ -316,10 +285,10 @@ class EventList(object):
         text_location = (self._config.bounding_box.left, self._config.bounding_box.top)
         text_params = self._config.heading.text
 
-        CairoUtils.set_text_params(context, text_params)
-        text_location = CairoUtils.draw_text(context, text, text_location)
-        text_location = CairoUtils.draw_text(context, text, text_location)
-        text_location = CairoUtils.draw_text(context, text, text_location)
+
+        text_location = CairoUtils.draw_text(context, text, text_location, text_params)
+        text_location = CairoUtils.draw_text(context, text, text_location, text_params)
+        text_location = CairoUtils.draw_text(context, text, text_location, text_params)
 
     def set_timeline_events(self):
         pass
