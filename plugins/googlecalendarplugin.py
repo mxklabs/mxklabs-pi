@@ -23,8 +23,9 @@ class GoogleCalendarTimelineItem(plugin.TimelineItem):
     STRPDATE_FMT = '%Y-%m-%d'
     STRPTIME_FMT = '%Y-%m-%dT%H:%M:%SZ'
 
-    def __init__(self, event):
+    def __init__(self, event, plug):
         self._event = event
+        self._plugin = plug
         plugin.TimelineItem.__init__(self)
 
     def id(self):
@@ -60,6 +61,12 @@ class GoogleCalendarTimelineItem(plugin.TimelineItem):
 
     def event(self):
         return self._event
+
+    def plugin(self):
+        return self._plugin
+
+    def title(self):
+        return self._event['summary']
 
     def is_all_day_event(self):
         return 'date' in self._event['start']
@@ -196,7 +203,7 @@ class GoogleCalendarPlugin(plugin.Plugin):
             events += api_result.get('items', [])
 
         #pp.pprint(events)
-        return [GoogleCalendarTimelineItem(event) for event in events]
+        return [GoogleCalendarTimelineItem(event, self) for event in events]
 
     def get_colours(self, service):
         colorsResult = service.colors().get().execute()

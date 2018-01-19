@@ -144,6 +144,10 @@ class Timeline(object):
         self._unit = self._bb.width
         self._centre = (self._bb.left + self._bb.width / 2,
                         self._bb.top + self._bb.height / 2)
+        self._events = None
+
+    def set_timeline_events(self, events):
+        self._events = events
 
     def datetime_to_t(self, datetime):
         return 2 * math.pi * (datetime.hour * 60 + datetime.minute) / (12 * 60)
@@ -196,47 +200,48 @@ class Timeline(object):
 
         return result
 
-    def render(self, context, now):
+    def render(self, context, start_utc, end_utc):
 
         thickness = self._config.thickness
         length = self._config.length
 
         t_min = 0
-        t_max = (length.total_seconds() / (12 * 60 * 60)) * 2 * math.pi
+        t_max = ((end_utc - start_utc).total_seconds() / (12 * 60 * 60)) * 2 * math.pi
 
         #print("t_min={}".format(t_min))
         #print("t_max={}".format(t_max))
 
-        separator_spiral_params = self.get_spiral_params(offset=thickness, now=now)
+        separator_spiral_params = self.get_spiral_params(offset=thickness, now=start_utc)
         separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
+
         CairoUtils.move_to_points(context, separator_spiral_points)
         CairoUtils.set_stroke_params(context, self._config.stroke)
         context.stroke()
 
-        labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
+        labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=start_utc)
 
         # Find next
-        floored_now = now.replace(hour=now.hour//3*3, minute=0, second=0, microsecond=0)
+        floored_now = start_utc.replace(hour=start_utc.hour//3*3, minute=0, second=0, microsecond=0)
 
         context.set_font_size(10)
 
-        now_t = self.datetime_to_t(now)
+        now_t = self.datetime_to_t(start_utc)
         i = 1
 
         while True:
 
             label_datetime = floored_now + datetime.timedelta(hours=3*i)
-            if label_datetime > now + length:
+            if label_datetime > end_utc:
                 break
 
-            label_secs = (label_datetime - now).total_seconds()
+            label_secs = (label_datetime - start_utc).total_seconds()
             label_hours = 12 * int(label_secs // (12 * 60 * 60)) % (12 * 60 * 60)
 
             if label_hours > 0:
                 label_text = "+{}h".format(label_hours)
 
                 _, _, w, h, _, _ = context.text_extents(label_text)
-                label_timedelta = label_datetime - now
+                label_timedelta = label_datetime - start_utc
                 label_t = self.timedelta_to_t(label_timedelta)
                 label_point = self.get_spiral_point(labels_spiral_params, label_t)#
 
@@ -252,46 +257,57 @@ class Timeline(object):
 
             assert (isinstance(p, plugins.plugin.Plugin))
 
-            plugin_spiral_params = self.get_spiral_params(offset=thickness/2, now=now)
+            plugin_spiral_params = self.get_spiral_params(offset=thickness/2, now=start_utc)
 
             def spiral_point_generator(datetime):
-                point_timedelta = datetime - now
+                point_timedelta = datetime - start_utc
                 point_t = self.timedelta_to_t(point_timedelta)
 
                 return self.get_spiral_point(plugin_spiral_params, point_t)
 
             def spiral_points_generator(datetime_from, datetime_to):
-                from_timedelta = datetime_from - now
+                from_timedelta = datetime_from - start_utc
                 from_t = self.timedelta_to_t(from_timedelta)
-                to_timedelta = datetime_to - now
+                to_timedelta = datetime_to - start_utc
                 to_t = self.timedelta_to_t(to_timedelta)
 
                 return self.get_spiral_points(plugin_spiral_params, from_t, to_t)
 
-            timeline_items = p.get_timeline_items(now, now + self._config.length)
+            for event in self._events:
+                assert (isinstance(event, plugins.plugin.TimelineItem))
+                if event.plugin() == p:
+                    p.render_on_clockface(context, event, spiral_point_generator, spiral_points_generator)
 
-            for timeline_item in timeline_items:
-                assert(isinstance(timeline_item, plugins.plugin.TimelineItem))
-                p.render_on_clockface(context, timeline_item, spiral_point_generator, spiral_points_generator)
 
 class EventList(object):
 
     def __init__(self, config):
         self._config = config
+        self._events = None
 
     def render(self, context):
 
-        text = self._config.heading.label
+
         text_location = (self._config.bounding_box.left, self._config.bounding_box.top)
-        text_params = self._config.heading.text
 
 
-        text_location = CairoUtils.draw_text(context, text, text_location, text_params)
-        text_location = CairoUtils.draw_text(context, text, text_location, text_params)
-        text_location = CairoUtils.draw_text(context, text, text_location, text_params)
+        day = None
 
-    def set_timeline_events(self):
-        pass
+        for event in self._events:
+            event_day = event.start().replace(hour=0, minute=0, second=0, microsecond=0)
+
+            if event_day != day:
+                text = self._config.header_text_fn(event.start())
+                text_location = CairoUtils.draw_text(context, text,
+                                                     text_location, self._config.heading)
+                day = event_day
+
+
+            text_location = CairoUtils.draw_text(context, event.title(), text_location, self._config.event)
+
+
+    def set_timeline_events(self, events):
+        self._events = events
 
 
 class MainWindow(tkinter.Tk):
@@ -326,9 +342,22 @@ class MainWindow(tkinter.Tk):
 
         try:
             while True:
-                self.render()
+                events = []
+
+                now = datetime.datetime.now()
+
+                for p in self._plugins:
+                    events += p.get_timeline_items(now, now + self._config.timespan)
+
+                events.sort(key=lambda e: e.start())
+
+                self._event_list.set_timeline_events(events)
+                self._timeline.set_timeline_events(events)
+
+                self.render(now)
                 self.update_idletasks()
                 self.update()
+
 
 
                 time.sleep(5)
@@ -341,9 +370,8 @@ class MainWindow(tkinter.Tk):
             print("Exiting.")
 
 
-    def render(self):
+    def render(self, now):
 
-        now = datetime.datetime.now()
 
         self.context.set_operator(cairo.constants.OPERATOR_OVER)
 
@@ -353,7 +381,7 @@ class MainWindow(tkinter.Tk):
 
         #self.context.set_operator(cairo.constants.OPERATOR_SCREEN)
 
-        self._timeline.render(self.context, now)
+        self._timeline.render(self.context, now, now + self._config.timespan)
         self._clock.render(self.context, now)
         self._event_list.render(self.context)
 

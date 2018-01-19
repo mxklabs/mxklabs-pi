@@ -1,12 +1,26 @@
 import datetime
 
 import cairocffi as cairo
+import datetime
 import dotmap
 
 import plugins.googlecalendarplugin
 
+days = \
+{
+    0 : "Monday",
+    1 : "Tuesday",
+    2 : "Wednesday",
+    3 : "Thursday",
+    4 : "Friday",
+    5 : "Saturday",
+    6 : "Sunday"
+}
+
 cfg = dotmap.DotMap(
 {
+    'timespan' : datetime.timedelta(hours=24*7),
+
     'window' :
     {
         'width' : 800,
@@ -92,8 +106,8 @@ cfg = dotmap.DotMap(
             'width' : 440,
             'height' : 440
         },
+
         'thickness' : 15,
-        'length' : datetime.timedelta(hours=24*7),
 
         'stroke':
         {
@@ -106,24 +120,30 @@ cfg = dotmap.DotMap(
 
     'event_list' :
     {
+        'header_text_fn' : (lambda dt : days[dt.weekday()]),
+
         'bounding_box' :
         {
-            'left' : 460,
+            'left' : 480,
             'top' : 20,
-            'width' : 320,
+            'width' : 300,
             'height' : 440
         },
 
         'heading' :
         {
-            'label' : 'Test label',
-            'text' :
-            {
-                'colour' : (1, 1, 1, 1),
-                'font_size' : 20,
-                'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
-                'height': 30
-            }
+            'colour' : (1, 1, 1, 1),
+            'font_size' : 20,
+            'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
+            'height': 30
+        },
+
+        'event':
+        {
+            'colour' : (1, 1, 1, 1),
+            'font_size' : 10,
+            'font_face' : ("Deja Vu", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL),
+            'height': 14
         }
     },
 

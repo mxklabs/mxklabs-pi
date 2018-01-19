@@ -27,6 +27,16 @@ class TimelineItem(object):
         """ Return the start of the event (either a datetime or a date object). """
         pass
 
+    @abc.abstractmethod
+    def plugin(self):
+        """ Return the plugin associated with this event. """
+        pass
+
+    @abc.abstractmethod
+    def title(self):
+        """ Return the title. """
+        pass
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Plugin(object):
