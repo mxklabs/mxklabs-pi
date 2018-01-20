@@ -32,7 +32,6 @@ nr_suffix = \
     9 : "th",
 }
 
-
 cfg = dotmap.DotMap(
 {
     'timespan' : datetime.timedelta(hours=24*5),
@@ -54,7 +53,12 @@ cfg = dotmap.DotMap(
             'height': 40
         },
 
-        'background' : (1, 1, 1, 1),
+        'fill' :
+        {
+            'colour' : (1, 1, 1, 1)
+        },
+
+        'stroke' : None,
 
         'text_fn' : lambda : datetime.datetime.now().strftime("  %A, %d{} of %B %Y").format(nr_suffix[datetime.datetime.now().day%10]),
 
@@ -166,9 +170,9 @@ cfg = dotmap.DotMap(
         'bounding_box' :
         {
             'left' : 520,
-            'top' : 20,
+            'top' : 40,
             'width' : 300,
-            'height' : 480
+            'height' : 400
         },
 
         'heading' :
