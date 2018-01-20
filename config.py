@@ -34,19 +34,21 @@ cfg = dotmap.DotMap(
     {
         'bounding_box':
         {
-            'left': 20,
-            'top': 0,
-            'width': 760,
-            'height': 40
+            'left': 0,
+            'top': 0, # Trust me, there's space.
+            'width': 800,
+            'height': 60
         },
 
-        'text_fn' : lambda : datetime.datetime.now().strftime("%A, %d/%b/%Y"),
+        'background' : (1, 1, 1, 1),
+
+        'text_fn' : lambda : datetime.datetime.now().strftime("  %A, %d/%b/%Y"),
 
         'font' :
         {
-            'colour' : (1, 1, 1, 1),
-            'font_size' : 25,
-            'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
+            'colour' : (0, 0, 0, 1),
+            'font_size' : 40,
+            'font_face' : ("FreeMono", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
             'height': 40
         },
     },

@@ -84,6 +84,10 @@ class AppHeading(object):
 
     def render(self, context, start_utc):
         text = self._config.text_fn()
+        context.set_source_rgba(*self._config.background)
+        context.rectangle(float(self._bb.left), float(self._bb.top), float(self._bb.width), float(self._bb.height))
+        context.fill()
+
         text_location = CairoUtils.draw_text(context, text,
                                              (self._bb.left, self._bb.top),
                                              self._config.font)
