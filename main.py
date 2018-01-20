@@ -12,6 +12,7 @@ import PIL.ImageTk
 
 from config import cfg
 
+import common
 import plugins.plugin
 
 class CairoUtils(object):
@@ -74,6 +75,19 @@ class ContextRestorer(object):
 
     def __exit__(self, type, value, traceback):
         self._context.set_matrix(self._matrix)
+
+class AppHeading(object):
+
+    def __init__(self, config):
+        self._config = config
+        self._bb = self._config.bounding_box
+
+    def render(self, context, start_utc):
+        text = self._config.text_fn()
+        text_location = CairoUtils.draw_text(context, text,
+                                             (self._bb.left, self._bb.top),
+                                             self._config.font)
+
 
 class Clock(object):
 
@@ -285,6 +299,23 @@ class EventList(object):
         self._config = config
         self._events = None
 
+    def datetime_to_heading(self, dt_utc):
+        now_utc = datetime.datetime.utcnow()
+        now_local = common.utc_to_local(now_utc)
+        tomorrow_local = common.utc_to_local(now_utc + datetime.timedelta(days=1))
+        dt_local = common.utc_to_local(dt_utc)
+
+        if now_local.year == dt_local.year and \
+                now_local.month == dt_local.month and \
+                now_local.day == dt_local.day:
+            return self._config.today_header_text_fn()
+        elif tomorrow_local.year == dt_local.year and \
+                tomorrow_local.month == dt_local.month and \
+                tomorrow_local.day == dt_local.day:
+            return self._config.tomorrow_header_text_fn()
+        else:
+            return self._config.datetime_header_text_fn(now_local)
+
     def render(self, context):
 
 
@@ -296,8 +327,10 @@ class EventList(object):
         for event in self._events:
             event_day = event.start().replace(hour=0, minute=0, second=0, microsecond=0)
 
+
+
             if event_day != day:
-                text = self._config.header_text_fn(event.start())
+                text = self.datetime_to_heading(event.start())
                 text_location = CairoUtils.draw_text(context, text,
                                                      text_location, self._config.heading)
                 day = event_day
@@ -331,6 +364,7 @@ class MainWindow(tkinter.Tk):
                          config.plugins]
         self._timeline = Timeline(self._config.timeline, self._plugins)
         self._event_list = EventList(config.event_list)
+        self._app_heading = AppHeading(self._config.app_heading)
         self._clock = Clock(self._config.clock)
 
         self.label = tkinter.Label(self)
@@ -384,6 +418,7 @@ class MainWindow(tkinter.Tk):
         self._timeline.render(self.context, now, now + self._config.timespan)
         self._clock.render(self.context, now)
         self._event_list.render(self.context)
+        self._app_heading.render(self.context, now)
 
         new_img = PIL.Image.frombuffer("RGBA", self.size,
                                    self.surface.get_data(),

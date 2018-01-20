@@ -4,6 +4,7 @@ import cairocffi as cairo
 import datetime
 import dotmap
 
+import common
 import plugins.googlecalendarplugin
 
 days = \
@@ -17,9 +18,10 @@ days = \
     6 : "Sunday"
 }
 
+
 cfg = dotmap.DotMap(
 {
-    'timespan' : datetime.timedelta(hours=24*7),
+    'timespan' : datetime.timedelta(hours=24*5),
 
     'window' :
     {
@@ -28,14 +30,35 @@ cfg = dotmap.DotMap(
         'background_colour' : (0, 0, 0, 1)
     },
 
+    'app_heading' :
+    {
+        'bounding_box':
+        {
+            'left': 20,
+            'top': 0,
+            'width': 760,
+            'height': 40
+        },
+
+        'text_fn' : lambda : datetime.datetime.now().strftime("%A, %d/%b/%Y"),
+
+        'font' :
+        {
+            'colour' : (1, 1, 1, 1),
+            'font_size' : 25,
+            'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
+            'height': 40
+        },
+    },
+
     'clock' :
     {
         'bounding_box' :
         {
             'left' : 20,
-            'top' : 20,
-            'width' : 440,
-            'height' : 440
+            'top' : 60,
+            'width' : 400,
+            'height' : 400
         },
 
         'hour_ticks' :
@@ -102,9 +125,9 @@ cfg = dotmap.DotMap(
         'bounding_box' :
         {
             'left' : 20,
-            'top' : 20,
-            'width' : 440,
-            'height' : 440
+            'top' : 60,
+            'width' : 400,
+            'height' : 400
         },
 
         'thickness' : 15,
@@ -120,30 +143,32 @@ cfg = dotmap.DotMap(
 
     'event_list' :
     {
-        'header_text_fn' : (lambda dt : days[dt.weekday()]),
+        'today_header_text_fn' : (lambda : "Today"),
+        'tomorrow_header_text_fn' : (lambda : "Tomorrow"),
+        'datetime_header_text_fn' : (lambda dt : days[dt.weekday()]),
 
         'bounding_box' :
         {
-            'left' : 480,
+            'left' : 520,
             'top' : 20,
             'width' : 300,
-            'height' : 440
+            'height' : 480
         },
 
         'heading' :
         {
             'colour' : (1, 1, 1, 1),
-            'font_size' : 20,
+            'font_size' : 24,
             'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
-            'height': 30
+            'height': 40
         },
 
         'event':
         {
             'colour' : (1, 1, 1, 1),
-            'font_size' : 10,
+            'font_size' : 16,
             'font_face' : ("Deja Vu", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL),
-            'height': 14
+            'height': 20
         }
     },
 
