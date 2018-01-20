@@ -18,6 +18,20 @@ days = \
     6 : "Sunday"
 }
 
+nr_suffix = \
+{
+    0 : "th",
+    1 : "st",
+    2 : "nd",
+    3 : "rd",
+    4 : "th",
+    5 : "th",
+    6 : "th",
+    7 : "th",
+    8 : "th",
+    9 : "th",
+}
+
 
 cfg = dotmap.DotMap(
 {
@@ -35,21 +49,21 @@ cfg = dotmap.DotMap(
         'bounding_box':
         {
             'left': 0,
-            'top': 0, # Trust me, there's space.
+            'top': 0,
             'width': 800,
-            'height': 60
+            'height': 40
         },
 
         'background' : (1, 1, 1, 1),
 
-        'text_fn' : lambda : datetime.datetime.now().strftime("  %A, %d/%b/%Y"),
+        'text_fn' : lambda : datetime.datetime.now().strftime("  %A, %d{} of %B %Y").format(nr_suffix[datetime.datetime.now().day%10]),
 
         'font' :
         {
             'colour' : (0, 0, 0, 1),
-            'font_size' : 40,
+            'font_size' : 30,
             'font_face' : ("FreeMono", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
-            'height': 40
+            'height': 30
         },
     },
 
