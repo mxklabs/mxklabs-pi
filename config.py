@@ -135,9 +135,9 @@ cfg = dotmap.DotMap(
                 'dash_style' : ([], 0),
                 'line_cap' : cairo.constants.LINE_CAP_BUTT
             },
-            'front_depth_pc' : 0.51,
+            'front_depth_pc' : 0.50,
             'back_depth_pc' : 0.05,
-            'front_thickness_pc' : 0.02,
+            'front_thickness_pc' : 0.01,
             'back_thickness_pc' : 0.02
         },
     },
@@ -179,18 +179,24 @@ cfg = dotmap.DotMap(
 
         'heading' :
         {
-            'colour' : (1, 1, 1, 1),
-            'font_size' : 24,
-            'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
-            'height': 40
+            'font' :
+            {
+                'colour' : (1, 1, 1, 1),
+                'font_size' : 24,
+                'font_face' : ("Deja Vu", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
+                'height': 40
+            }
         },
 
         'event':
         {
-            'colour' : (1, 1, 1, 1),
-            'font_size' : 16,
-            'font_face' : ("Deja Vu", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL),
-            'height': 20
+            'font' :
+            {
+                'colour' : (1, 1, 1, 1),
+                'font_size' : 16,
+                'font_face' : ("Deja Vu", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL),
+                'height': 20
+            }
         }
     },
 

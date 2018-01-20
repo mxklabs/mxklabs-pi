@@ -311,6 +311,13 @@ class EventList(object):
         self._events = None
 
     def datetime_to_heading(self, dt_utc):
+        """
+        Workout what to display as a heading for a given datetime object with
+        a UTC timezone. We basically translate the datetime to local time and
+        if it matches today's date, we call 'today_header_text_fn', for tomorrow's
+        date we call 'tomorrow_header_text_fn' and otherwise we call
+        'datetime_header_text_fn' with the event's date.
+        """
         now_utc = datetime.datetime.utcnow()
         now_local = common.utc_to_local(now_utc)
         tomorrow_local = common.utc_to_local(now_utc + datetime.timedelta(days=1))
@@ -325,7 +332,7 @@ class EventList(object):
                 tomorrow_local.day == dt_local.day:
             return self._config.tomorrow_header_text_fn()
         else:
-            return self._config.datetime_header_text_fn(now_local)
+            return self._config.datetime_header_text_fn(dt_local)
 
     def render(self, context):
 
@@ -343,11 +350,14 @@ class EventList(object):
             if event_day != day:
                 text = self.datetime_to_heading(event.start())
                 text_location = CairoUtils.draw_text(context, text,
-                                                     text_location, self._config.heading)
+                                                     text_location, self._config.heading.font)
                 day = event_day
 
 
-            text_location = CairoUtils.draw_text(context, event.title(), text_location, self._config.event)
+            text_location = CairoUtils.draw_text(context,
+                                                 event.title(),
+                                                 text_location,
+                                                 self._config.event.font)
 
 
     def set_timeline_events(self, events):
