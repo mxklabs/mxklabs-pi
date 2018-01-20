@@ -144,12 +144,19 @@ class Clock(object):
             rotation = (2 * math.pi) * (num / den)
             context.rotate(rotation)
 
-            context.rectangle(
-                -(self._unit * params.thickness_pc) / 2,
-                -(self._unit * params.front_depth_pc),
-                 (self._unit * params.thickness_pc),
-                 (self._unit * (params.front_depth_pc
-                    + params.back_depth_pc)))
+            p1 = (-(self._unit * params.back_thickness_pc) / 2,
+                  +(self._unit * params.back_depth_pc))
+            p2 = (+(self._unit * params.back_thickness_pc) / 2,
+                  +(self._unit * params.back_depth_pc))
+            p3 = (+(self._unit * params.front_thickness_pc) / 2,
+                  -(self._unit * params.front_depth_pc))
+            p4 = (-(self._unit * params.front_thickness_pc) / 2,
+                  -(self._unit * params.front_depth_pc))
+
+            context.move_to(*p1)
+            context.line_to(*p2)
+            context.line_to(*p3)
+            context.line_to(*p4)
 
             CairoUtils.draw(context, params)
 

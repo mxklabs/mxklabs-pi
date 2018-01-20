@@ -76,9 +76,9 @@ cfg = dotmap.DotMap(
         'bounding_box' :
         {
             'left' : 20,
-            'top' : 60,
-            'width' : 400,
-            'height' : 400
+            'top' : 70,
+            'width' : 390,
+            'height' : 390
         },
 
         'hour_ticks' :
@@ -107,36 +107,38 @@ cfg = dotmap.DotMap(
         {
             'fill' :
             {
-                'colour' : (1, 1, 1, 0.5)
+                'colour' : (1, 1, 1, 1)
             },
             'stroke' :
             {
                 'colour' : (0, 0, 0, 1),
-                'line_width' : 2,
+                'line_width' : 1,
                 'dash_style' : ([], 0),
                 'line_cap' : cairo.constants.LINE_CAP_BUTT
             },
-            'front_depth_pc' : 0.30,
+            'front_depth_pc' : 0.40,
             'back_depth_pc' : 0.05,
-            'thickness_pc' : 0.03
+            'front_thickness_pc' : 0.015,
+            'back_thickness_pc' : 0.03
         },
 
         'minute_hand' :
         {
             'fill' :
             {
-                'colour' : (0.5, 0.5, 1, 0.5)
+                'colour' : (0.5, 0.5, 1, 1)
             },
             'stroke' :
             {
                 'colour' : (0, 0, 0, 1),
-                'line_width' : 2,
+                'line_width' : 1,
                 'dash_style' : ([], 0),
                 'line_cap' : cairo.constants.LINE_CAP_BUTT
             },
-            'front_depth_pc' : 0.50,
-            'back_depth_pc' : 0.04,
-            'thickness_pc' : 0.02,
+            'front_depth_pc' : 0.51,
+            'back_depth_pc' : 0.05,
+            'front_thickness_pc' : 0.02,
+            'back_thickness_pc' : 0.02
         },
     },
 
@@ -145,9 +147,9 @@ cfg = dotmap.DotMap(
         'bounding_box' :
         {
             'left' : 20,
-            'top' : 60,
-            'width' : 400,
-            'height' : 400
+            'top' : 70,
+            'width' : 390,
+            'height' : 390
         },
 
         'thickness' : 15,
