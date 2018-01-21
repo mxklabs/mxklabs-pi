@@ -102,9 +102,9 @@ class GoogleCalendarPlugin(plugin.Plugin):
         self._last_end = end
         return self._events
 
-    def render_on_clockface(self, cairo_context, timeline_item, point_generator, line_generator):
+    def render_on_clockface(self, cairo_context, start_utc, end_utc, timeline_item, point_generator, line_generator):
 
-        points = line_generator(timeline_item.start(), timeline_item.end())
+        points = line_generator(max(start_utc, timeline_item.start()), min(end_utc, timeline_item.end()))
 
         assert (len(points) >= 2)
         cairo_context.move_to(*points[0])

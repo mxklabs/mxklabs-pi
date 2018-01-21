@@ -350,7 +350,7 @@ class Timeline(object):
             for event in self._events:
                 assert (isinstance(event, plugins.plugin.TimelineItem))
                 if event.plugin() == p:
-                    p.render_on_clockface(context, event, spiral_point_generator, spiral_points_generator)
+                    p.render_on_clockface(context, start_utc, end_utc, event, spiral_point_generator, spiral_points_generator)
 
 
 class EventList(object):
