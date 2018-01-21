@@ -109,6 +109,10 @@ class Clock(object):
                 self._bb.left + self._bb.width / 2,
                 self._bb.top + self._bb.height / 2)
 
+            # Draw the face.
+            context.arc(0, 0, self._unit / 2, 0, 2 * math.pi)
+            CairoUtils.draw(context, self._config.face)
+
             # Draw ticks.
             for i in range(0, 60):
 
@@ -225,23 +229,68 @@ class Timeline(object):
 
         return result
 
+    def get_dt_control_points(self, start_utc, end_utc, hours):
+        """
+        Return a list of datetimes where the timespan in broken up in multiple
+        of the parameters hours.
+        """
+        result = []
+        result += [start_utc]
+
+        # Find next
+        floored_start_utc = start_utc.replace(hour=start_utc.hour//hours*hours, minute=0, second=0, microsecond=0)
+
+        now_t = self.datetime_to_t(start_utc)
+        i = 1
+
+        while True:
+
+            step = floored_start_utc + datetime.timedelta(hours=hours*i)
+            if step > end_utc:
+                break
+
+            result += [step]
+
+            i += 1
+
+        result += [end_utc]
+
+        return result
+
     def render(self, context, start_utc, end_utc):
 
         thickness = self._config.thickness
         length = self._config.length
 
         t_min = 0
-        t_max = ((end_utc - start_utc).total_seconds() / (12 * 60 * 60)) * 2 * math.pi
+        t_max = ((end_utc - start_utc).total_seconds() / (12 * 60 * 60)) * 2 * math.pi + 4 * math.pi
 
         #print("t_min={}".format(t_min))
         #print("t_max={}".format(t_max))
 
-        separator_spiral_params = self.get_spiral_params(offset=thickness, now=start_utc)
-        separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_min, t_max)
+        separator_spiral_params = self.get_spiral_params(offset=0, now=start_utc)
 
-        CairoUtils.move_to_points(context, separator_spiral_points)
-        CairoUtils.set_stroke_params(context, self._config.stroke)
-        context.stroke()
+        control_points = self.get_dt_control_points(start_utc, end_utc, 12)
+
+        for i in range(len(control_points)-1):
+            dt_from = control_points[i]
+            dt_to = control_points[i + 1]
+            t_from = self.timedelta_to_t(dt_from - start_utc)
+            t_to = self.timedelta_to_t(dt_to - start_utc)
+
+            separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_from, t_to)
+
+
+            CairoUtils.move_to_points(context, separator_spiral_points)
+
+            mid = dt_from + (dt_to - dt_from) / 2
+
+            if mid.hour < 12:
+                CairoUtils.set_stroke_params(context, self._config.primary_stroke)
+            else:
+                CairoUtils.set_stroke_params(context,
+                                             self._config.secondary_stroke)
+            context.stroke()
 
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=start_utc)
 

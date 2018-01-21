@@ -34,7 +34,7 @@ nr_suffix = \
 
 cfg = dotmap.DotMap(
 {
-    'timespan' : datetime.timedelta(hours=24*5),
+    'timespan' : datetime.timedelta(hours=24*2),
 
     'window' :
     {
@@ -81,14 +81,26 @@ cfg = dotmap.DotMap(
             'height' : 390
         },
 
+        'face' :
+        {
+            'fill' : None,
+            'stroke' :
+            {
+                'colour': (1, 1, 1, 1),
+                'line_width': 1.5,
+                'dash_style': ([], 0),
+                'line_cap': cairo.constants.LINE_CAP_BUTT
+            }
+        },
+
         'hour_ticks' :
         {
             'fill' :
             {
-                'colour' : (1,1,1,1)
+                'colour' : (1, 1, 1, 1)
             },
             'stroke' : None,
-            'depth_pc' : 0.03,
+            'depth_pc' : 0.01,
             'thickness_pc' : 0.01
         },
 
@@ -96,7 +108,7 @@ cfg = dotmap.DotMap(
         {
             'fill' :
             {
-                'colour' : (0.5,0.5,0.5,1)
+                'colour' : (0, 0, 0, 0)
             },
             'stroke' : None,
             'depth_pc' : 0.01,
@@ -154,11 +166,19 @@ cfg = dotmap.DotMap(
 
         'thickness' : 15,
 
-        'stroke':
+        'primary_stroke':
         {
             'colour': (0.7, 0.7, 0.7, 1),
             'line_width': 1.5,
             'dash_style': ([], 0),
+            'line_cap': cairo.constants.LINE_CAP_BUTT
+        },
+
+        'secondary_stroke':
+        {
+            'colour': (0.35, 0.35, 0.35, 1),
+            'line_width': 1.5,
+            'dash_style': ([2,2], 0),
             'line_cap': cairo.constants.LINE_CAP_BUTT
         }
     },
