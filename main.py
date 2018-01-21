@@ -30,8 +30,10 @@ class CairoUtils(object):
         context.set_font_face(font_face)
         _, _, _, h, _, _ = context.text_extents(text)
         new_text_location = (text_location[0], text_location[1] + text_params.height)
-        context.move_to(*new_text_location)
-        context.show_text(text)
+
+        with ContextRestorer(context):
+            context.translate(*new_text_location)
+            context.show_text(text)
 
         return new_text_location
 
@@ -59,7 +61,7 @@ class CairoUtils(object):
             context.stroke()
 
     @staticmethod
-    def move_to_points(context, points):
+    def line_to_points(context, points):
         for point in points:
             context.line_to(*point)
 
@@ -68,13 +70,18 @@ class ContextRestorer(object):
     def __init__(self, context):
         self._context = context
         self._matrix = None
+        self._current_point = None
 
     def __enter__(self):
         self._matrix = self._context.get_matrix()
+        if self._context.has_current_point():
+            self._current_point = self._context.get_current_point()
         return None
 
     def __exit__(self, type, value, traceback):
         self._context.set_matrix(self._matrix)
+        if self._current_point is not None:
+            self._context.move_to(*self._current_point)
 
 class AppHeading(object):
 
@@ -157,10 +164,11 @@ class Clock(object):
             p4 = (-(self._unit * params.front_thickness_pc) / 2,
                   -(self._unit * params.front_depth_pc))
 
-            context.move_to(*p1)
+            context.line_to(*p1)
             context.line_to(*p2)
             context.line_to(*p3)
             context.line_to(*p4)
+            context.line_to(*p1)
 
             CairoUtils.draw(context, params)
 
@@ -235,7 +243,6 @@ class Timeline(object):
         of the parameters hours.
         """
         result = []
-        result += [start_utc]
 
         # Find next
         floored_start_utc = start_utc.replace(hour=start_utc.hour//hours*hours, minute=0, second=0, microsecond=0)
@@ -244,7 +251,6 @@ class Timeline(object):
         i = 1
 
         while True:
-
             step = floored_start_utc + datetime.timedelta(hours=hours*i)
             if step > end_utc:
                 break
@@ -252,8 +258,6 @@ class Timeline(object):
             result += [step]
 
             i += 1
-
-        result += [end_utc]
 
         return result
 
@@ -270,7 +274,10 @@ class Timeline(object):
 
         separator_spiral_params = self.get_spiral_params(offset=0, now=start_utc)
 
-        control_points = self.get_dt_control_points(start_utc, end_utc, 12)
+        end_utc_plus = end_utc + datetime.timedelta(hours=12)
+
+        control_points = [start_utc] + self.get_dt_control_points(
+            start_utc, end_utc_plus, 12) + [end_utc_plus]
 
         for i in range(len(control_points)-1):
             dt_from = control_points[i]
@@ -279,18 +286,25 @@ class Timeline(object):
             t_to = self.timedelta_to_t(dt_to - start_utc)
 
             separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_from, t_to)
+            #print(separator_spiral_points)
 
 
-            CairoUtils.move_to_points(context, separator_spiral_points)
+            CairoUtils.line_to_points(context, separator_spiral_points)
 
             mid = dt_from + (dt_to - dt_from) / 2
 
             if mid.hour < 12:
-                CairoUtils.set_stroke_params(context, self._config.primary_stroke)
+                stroke = self._config.primary_stroke
             else:
-                CairoUtils.set_stroke_params(context,
-                                             self._config.secondary_stroke)
+                stroke = self._config.secondary_stroke
+
+            #print(stroke.colour)
+            #stroke.colour = stroke.colour[:3] + (stroke.colour[3] - i * 0.1,)
+
+            CairoUtils.set_stroke_params(context, stroke)
             context.stroke()
+
+
 
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=start_utc)
 
@@ -317,15 +331,31 @@ class Timeline(object):
                 _, _, w, h, _, _ = context.text_extents(label_text)
                 label_timedelta = label_datetime - start_utc
                 label_t = self.timedelta_to_t(label_timedelta)
+
                 label_point = self.get_spiral_point(labels_spiral_params, label_t)#
 
                 with ContextRestorer(context):
+                    #print(label_point)
+
+
+                    #context.set_ctranslate(label_point[0], label_point[1])
                     context.translate(label_point[0], label_point[1])
-                    context.rotate(now_t + label_t)
-                    context.move_to(-w/2, h/2)
+                    #context.arc(0, 0, 10, 0, 2 * math.pi)
+
+
+                    #context.rotate(now_t + label_t)
+                    context.translate(-w / 2, h / 2)
+                    context.move_to(0, 0)
+
+                    #context.move_to(label_point[0] - w / 2,
+                    #                label_point[1] + h / 2)
+
                     context.show_text(label_text)
 
             i += 1
+
+        context.set_source_rgba(1, 0, 0, 1)
+        context.stroke()
 
         for p in self._plugins: \
 
@@ -350,7 +380,9 @@ class Timeline(object):
             for event in self._events:
                 assert (isinstance(event, plugins.plugin.TimelineItem))
                 if event.plugin() == p:
-                    p.render_on_clockface(context, start_utc, end_utc, event, spiral_point_generator, spiral_points_generator)
+                    p.render_on_clockface(context, start_utc, end_utc, event,
+                                          spiral_point_generator,
+                                          spiral_points_generator)
 
 
 class EventList(object):

@@ -168,7 +168,7 @@ cfg = dotmap.DotMap(
 
         'primary_stroke':
         {
-            'colour': (0.7, 0.7, 0.7, 1),
+            'colour': (1, 1, 1, 1),
             'line_width': 1.5,
             'dash_style': ([], 0),
             'line_cap': cairo.constants.LINE_CAP_BUTT
@@ -176,9 +176,9 @@ cfg = dotmap.DotMap(
 
         'secondary_stroke':
         {
-            'colour': (0.35, 0.35, 0.35, 1),
+            'colour': (1, 1, 1, 1),
             'line_width': 1.5,
-            'dash_style': ([2,2], 0),
+            'dash_style': ([1,8,1,8], 0),
             'line_cap': cairo.constants.LINE_CAP_BUTT
         }
     },
