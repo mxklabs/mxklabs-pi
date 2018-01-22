@@ -65,6 +65,23 @@ class CairoUtils(object):
         for point in points:
             context.line_to(*point)
 
+    @staticmethod
+    def line_to_rounded_rect(context, left, top, width, height, arc_radius):
+        context.move_to(left + arc_radius, top)
+        context.line_to(left + width - arc_radius, top)
+        context.arc(left + width - arc_radius, top + arc_radius, arc_radius,
+                    1.5 * math.pi, 2 * math.pi)
+        context.line_to(left + width, top + height - arc_radius)
+        context.arc(left + width - arc_radius, top + height - arc_radius, arc_radius,
+                    0.0 * math.pi, 0.5 * math.pi)
+        context.line_to(left + arc_radius, top + height)
+        context.arc(left + arc_radius, top + height - arc_radius, arc_radius,
+                    0.5 * math.pi, 1.0 * math.pi)
+        context.line_to(left, top + arc_radius)
+        context.arc(left + arc_radius, top + arc_radius, arc_radius,
+                    1.0 * math.pi, 1.5 * math.pi)
+        context.line_to(left + arc_radius, top)
+
 class ContextRestorer(object):
 
     def __init__(self, context):
@@ -221,6 +238,10 @@ class Timeline(object):
 
         return (self._centre[0] + x, self._centre[1] + y)
 
+    def get_spiral_point_from_timedelta(self, spiral_params, td):
+        t = self.timedelta_to_t(td)
+        return self.get_spiral_point(spiral_params, t)
+
     def get_spiral_points(self, spiral_params, t_min, t_max):
         result = []
         t = t_min
@@ -272,39 +293,74 @@ class Timeline(object):
         #print("t_min={}".format(t_min))
         #print("t_max={}".format(t_max))
 
-        separator_spiral_params = self.get_spiral_params(offset=0, now=start_utc)
+        spiral_params = self.get_spiral_params(offset=0, now=start_utc)
 
         end_utc_plus = end_utc + datetime.timedelta(hours=12)
 
-        control_points = [start_utc] + self.get_dt_control_points(
-            start_utc, end_utc_plus, 12) + [end_utc_plus]
+        control_points = self.get_dt_control_points(start_utc, end_utc_plus, 12)
+        control_points_ex = [start_utc] + control_points + [end_utc_plus]
 
-        for i in range(len(control_points)-1):
-            dt_from = control_points[i]
-            dt_to = control_points[i + 1]
+        for i in range(len(control_points_ex)-1):
+
+            dt_from = control_points_ex[i]
+            dt_to = control_points_ex[i + 1]
+
             t_from = self.timedelta_to_t(dt_from - start_utc)
             t_to = self.timedelta_to_t(dt_to - start_utc)
 
-            separator_spiral_points = self.get_spiral_points(separator_spiral_params, t_from, t_to)
-            #print(separator_spiral_points)
-
-
+            separator_spiral_points = self.get_spiral_points(spiral_params, t_from, t_to)
             CairoUtils.line_to_points(context, separator_spiral_points)
 
-            mid = dt_from + (dt_to - dt_from) / 2
-
-            if mid.hour < 12:
+            if (dt_from + (dt_to - dt_from) / 2).hour < 12:
                 stroke = self._config.primary_stroke
             else:
                 stroke = self._config.secondary_stroke
 
-            #print(stroke.colour)
-            #stroke.colour = stroke.colour[:3] + (stroke.colour[3] - i * 0.1,)
-
             CairoUtils.set_stroke_params(context, stroke)
             context.stroke()
 
+        midnights_in_timeline = self.get_dt_control_points(start_utc, end_utc, 24)
 
+        day_label_margin_x = self._config.day_labels.margin_x
+        day_label_margin_y = self._config.day_labels.margin_y
+        day_label_height = self._config.day_labels.height
+
+        for midnight in midnights_in_timeline:
+            next_midnight = midnight + datetime.timedelta(hours=24)
+            #print(midnight)
+
+            with ContextRestorer(context):
+                
+                p0 = self.get_spiral_point_from_timedelta(spiral_params, midnight - start_utc)
+                p1 = self.get_spiral_point_from_timedelta(spiral_params, next_midnight - start_utc)
+
+                #point = self.get_spiral_point(spiral_params, t_to)
+
+                left = p0[0] + day_label_margin_x
+                top = p0[1] + day_label_margin_y
+                width = day_label_height
+                height = p1[1] - p0[1] - 2 * day_label_margin_y
+
+                CairoUtils.line_to_rounded_rect(context, left, top, width, height, 4)
+
+                #p0_ = (p0[0] + day_label_margin_x, p0[1] + day_label_margin_y)
+                #p1_ = (p1[0] + day_label_margin_x, p1[1] - day_label_margin_y)
+
+
+                #context.move_to(*p0_)
+                #context.line_to(*p1_)
+                #context.line_to(p1_[0] + day_label_height, p1_[1])
+                #context.line_to(p0_[0] + day_label_height, p0_[1])
+                #context.line_to(*p0_)
+
+                CairoUtils.draw(context, self._config.day_labels.background)
+
+                context.move_to(left + width / 2, top + height / 2)
+                CairoUtils.draw_text(context, "{}".format(midnight.weekday()), (left + width / 2, top + height / 2), self._config.day_labels.font)
+
+
+
+        """
 
         labels_spiral_params = self.get_spiral_params(offset=thickness/2, now=start_utc)
 
@@ -353,6 +409,7 @@ class Timeline(object):
                     context.show_text(label_text)
 
             i += 1
+        """
 
         context.set_source_rgba(1, 0, 0, 1)
         context.stroke()

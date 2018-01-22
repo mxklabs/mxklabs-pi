@@ -34,7 +34,7 @@ nr_suffix = \
 
 cfg = dotmap.DotMap(
 {
-    'timespan' : datetime.timedelta(hours=24*2),
+    'timespan' : datetime.timedelta(hours=24*2+6),
 
     'window' :
     {
@@ -180,6 +180,31 @@ cfg = dotmap.DotMap(
             'line_width': 1.5,
             'dash_style': ([1,8,1,8], 0),
             'line_cap': cairo.constants.LINE_CAP_BUTT
+        },
+
+        'day_labels' :
+        {
+            'height' : 14,
+            'margin_x' : 1,
+            'margin_y' : 3,
+
+            'background' :
+            {
+
+                'fill' :
+                {
+                    'colour' : (0.5, 0.5, 0.5, 1)
+                },
+                'stroke' : None
+            },
+
+            'font' :
+            {
+                'colour' : (1, 1, 1, 1),
+                'font_size' : 10,
+                'font_face' : ("FreeMono", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
+                'height': 30
+            }
         }
     },
 
