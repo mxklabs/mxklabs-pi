@@ -7,7 +7,7 @@ import dotmap
 import common
 import plugins.googlecalendarplugin
 
-days = \
+days_long = \
 {
     0 : "Monday",
     1 : "Tuesday",
@@ -16,6 +16,17 @@ days = \
     4 : "Friday",
     5 : "Saturday",
     6 : "Sunday"
+}
+
+days_short = \
+{
+    0 : "MON",
+    1 : "TUE",
+    2 : "WED",
+    3 : "THU",
+    4 : "FRI",
+    5 : "SAT",
+    6 : "SUN"
 }
 
 nr_suffix = \
@@ -34,7 +45,7 @@ nr_suffix = \
 
 cfg = dotmap.DotMap(
 {
-    'timespan' : datetime.timedelta(hours=24*2+6),
+    'timespan' : datetime.timedelta(hours=24*4),
 
     'window' :
     {
@@ -187,23 +198,189 @@ cfg = dotmap.DotMap(
             'height' : 14,
             'margin_x' : 1,
             'margin_y' : 3,
+            'text_fn' : (lambda dt : days_short[dt.weekday()]),
 
-            'background' :
+            'monday' :
             {
-
-                'fill' :
+                'background' :
                 {
-                    'colour' : (0.5, 0.5, 0.5, 1)
-                },
-                'stroke' : None
-            },
 
-            'font' :
+                    'fill' :
+                    {
+                        'colour' : (0.60, 0.00, 0.00, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
+            },
+            'tuesday' :
             {
-                'colour' : (1, 1, 1, 1),
-                'font_size' : 10,
-                'font_face' : ("FreeMono", cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL),
-                'height': 30
+                'background' :
+                {
+
+                    'fill' :
+                    {
+                        'colour' : (0.60, 0.27, 0.00, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
+            },
+            'wednesday' :
+            {
+                'background' :
+                {
+
+                    'fill' :
+                    {
+                        'colour' : (0.66, 0.50, 0.01, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
+            },
+            'thursday' :
+            {
+                'background' :
+                {
+
+                    'fill' :
+                    {
+                        'colour' : (0.05, 0.54, 0.00, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
+            },
+            'friday' :
+            {
+                'background' :
+                {
+
+                    'fill' :
+                    {
+                        'colour' : (0.00, 0.51, 0.35, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
+            },
+            'saturday' :
+            {
+                'background' :
+                {
+
+                    'fill' :
+                    {
+                        'colour' : (0.00, 0.39, 0.51, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
+            },
+            'sunday' :
+            {
+                'background' :
+                {
+
+                    'fill' :
+                    {
+                        'colour' : (0.51, 0.00, 0.46, 1)
+                    },
+                    'stroke' :
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+                },
+
+                'font' :
+                {
+                    'colour' : (1, 1, 1, 1),
+                    'font_size' : 8,
+                    'font_face' : ("FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                    'height': 30
+                }
             }
         }
     },
@@ -212,7 +389,7 @@ cfg = dotmap.DotMap(
     {
         'today_header_text_fn' : (lambda : "Today"),
         'tomorrow_header_text_fn' : (lambda : "Tomorrow"),
-        'datetime_header_text_fn' : (lambda dt : days[dt.weekday()]),
+        'datetime_header_text_fn' : (lambda dt : days_long[dt.weekday()]),
 
         'bounding_box' :
         {

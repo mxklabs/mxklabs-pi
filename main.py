@@ -23,19 +23,36 @@ class CairoUtils(object):
         context.set_source_rgba(*fill_params.colour)
 
     @staticmethod
-    def draw_text(context, text, text_location, text_params):
+    def draw_text(context, text, text_location, text_params, angle=0, centre_x=-1, centre_y=-1):
         context.set_source_rgba(*text_params.colour)
         context.set_font_size(text_params.font_size)
         font_face = context.select_font_face(*text_params.font_face)
         context.set_font_face(font_face)
-        _, _, _, h, _, _ = context.text_extents(text)
-        new_text_location = (text_location[0], text_location[1] + text_params.height)
+        _, _, w, h, _, _ = context.text_extents(text)
 
         with ContextRestorer(context):
-            context.translate(*new_text_location)
+
+            if centre_x < 0:
+                additional_x = 0
+            elif centre_x == 0:
+                additional_x = -w / 2
+            else:
+                additional_x = -w
+
+            if centre_y < 0:
+                additional_y = 0
+            elif centre_y == 0:
+                additional_y = h / 2
+            else:
+                additional_y = h
+
+            context.translate(*text_location)
+            context.rotate(angle)
+            context.translate(additional_x, additional_y)
+            context.move_to(0, 0)
             context.show_text(text)
 
-        return new_text_location
+
 
     @staticmethod
     def set_stroke_params(context, stroke_params):
@@ -112,9 +129,15 @@ class AppHeading(object):
         context.rectangle(float(self._bb.left), float(self._bb.top), float(self._bb.width), float(self._bb.height))
         CairoUtils.draw(context, self._config)
 
-        text_location = CairoUtils.draw_text(context, text,
-                                             (self._bb.left, self._bb.top),
-                                             self._config.font)
+        with ContextRestorer(context):
+            context.translate(0, self._bb.top + self._bb.height/2)
+
+            text_location = CairoUtils.draw_text(context, text,
+                                                 (self._bb.left, self._bb.top),
+                                                 self._config.font,
+                                                 angle=0,
+                                                 centre_x=-1,
+                                                 centre_y=0)
 
 
 class Clock(object):
@@ -353,10 +376,20 @@ class Timeline(object):
                 #context.line_to(p0_[0] + day_label_height, p0_[1])
                 #context.line_to(*p0_)
 
-                CairoUtils.draw(context, self._config.day_labels.background)
+                day_field = datetime.datetime.strftime(midnight, "%A").lower()
+                CairoUtils.draw(context, self._config.day_labels[day_field].background)
 
-                context.move_to(left + width / 2, top + height / 2)
-                CairoUtils.draw_text(context, "{}".format(midnight.weekday()), (left + width / 2, top + height / 2), self._config.day_labels.font)
+                #print("left={} width={}".format(left, width))
+                #context.rotate(0.1 * math.pi)
+                text = self._config.day_labels.text_fn(midnight)
+
+                CairoUtils.draw_text(context=context,
+                                     text=text,
+                                     text_location=(left + width / 2, top + height / 2),
+                                     text_params=self._config.day_labels[day_field].font,
+                                     angle=1.5 * math.pi,
+                                     centre_x=0,
+                                     centre_y=0)
 
 
 
@@ -487,15 +520,15 @@ class EventList(object):
 
             if event_day != day:
                 text = self.datetime_to_heading(event.start())
-                text_location = CairoUtils.draw_text(context, text,
-                                                     text_location, self._config.heading.font)
+                CairoUtils.draw_text(context, text,
+                                     text_location, self._config.heading.font)
                 day = event_day
 
 
-            text_location = CairoUtils.draw_text(context,
-                                                 event.title(),
-                                                 text_location,
-                                                 self._config.event.font)
+            CairoUtils.draw_text(context,
+                                 event.title(),
+                                 text_location,
+                                 self._config.event.font)
 
 
     def set_timeline_events(self, events):
