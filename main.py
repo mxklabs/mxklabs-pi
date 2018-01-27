@@ -52,8 +52,6 @@ class CairoUtils(object):
             context.move_to(0, 0)
             context.show_text(text)
 
-
-
     @staticmethod
     def set_stroke_params(context, stroke_params):
         """ Set context to stroke_params. """
@@ -83,21 +81,52 @@ class CairoUtils(object):
             context.line_to(*point)
 
     @staticmethod
-    def line_to_rounded_rect(context, left, top, width, height, arc_radius):
-        context.move_to(left + arc_radius, top)
-        context.line_to(left + width - arc_radius, top)
-        context.arc(left + width - arc_radius, top + arc_radius, arc_radius,
-                    1.5 * math.pi, 2 * math.pi)
-        context.line_to(left + width, top + height - arc_radius)
-        context.arc(left + width - arc_radius, top + height - arc_radius, arc_radius,
-                    0.0 * math.pi, 0.5 * math.pi)
-        context.line_to(left + arc_radius, top + height)
-        context.arc(left + arc_radius, top + height - arc_radius, arc_radius,
-                    0.5 * math.pi, 1.0 * math.pi)
-        context.line_to(left, top + arc_radius)
-        context.arc(left + arc_radius, top + arc_radius, arc_radius,
-                    1.0 * math.pi, 1.5 * math.pi)
-        context.line_to(left + arc_radius, top)
+    def line_to_rounded_rect(context, left, top, width, height, arc_radius, open_left=False, open_right=False):
+
+        assert(not open_left or not open_right)
+
+        if not open_right:
+
+            if open_left:
+                context.move_to(left, top)
+            else:
+                context.move_to(left + arc_radius, top)
+
+            # Top line.
+            context.line_to(left + width - arc_radius, top)
+            # Top right arc.
+            context.arc(left + width - arc_radius, top + arc_radius, arc_radius, 1.5 * math.pi, 2 * math.pi)
+            # Right line.
+            context.line_to(left + width, top + height - arc_radius)
+            # Bottom right arc.
+            context.arc(left + width - arc_radius, top + height - arc_radius, arc_radius, 0.0 * math.pi, 0.5 * math.pi)
+
+            if open_left:
+                # Bottom line.
+                context.line_to(left, top + height)
+            else:
+                # Bottom line.
+                context.line_to(left + arc_radius, top + height)
+                # Bottom left arc.
+                context.arc(left + arc_radius, top + height - arc_radius, arc_radius, 0.5 * math.pi, 1.0 * math.pi)
+                # Left line.
+                context.line_to(left, top + arc_radius)
+                # Top left arc.
+                context.arc(left + arc_radius, top + arc_radius, arc_radius, 1.0 * math.pi, 1.5 * math.pi)
+
+        else:
+            context.move_to(left + width, top + height)
+
+            # Bottom line.
+            context.line_to(left + arc_radius, top + height)
+            # Bottom left arc.
+            context.arc(left + arc_radius, top + height - arc_radius, arc_radius, 0.5 * math.pi, 1.0 * math.pi)
+            # Left line.
+            context.line_to(left, top + arc_radius)
+            # Top left arc.
+            context.arc(left + arc_radius, top + arc_radius, arc_radius, 1.0 * math.pi, 1.5 * math.pi)
+            # Top line.
+            context.line_to(left + width, top)
 
 class ContextRestorer(object):
 
@@ -315,13 +344,25 @@ class Timeline(object):
 
         #print("t_min={}".format(t_min))
         #print("t_max={}".format(t_max))
-
         spiral_params = self.get_spiral_params(offset=0, now=start_utc)
 
-        end_utc_plus = end_utc + datetime.timedelta(hours=12)
+        '''
+        
+        CairoUtils.set_stroke_params(context, self._config.primary_stroke)
 
-        control_points = self.get_dt_control_points(start_utc, end_utc_plus, 12)
-        control_points_ex = [start_utc] + control_points + [end_utc_plus]
+
+        t_to = self.timedelta_to_t(end_utc - start_utc)
+        separator_spiral_points = self.get_spiral_points(spiral_params, 0, t_to )
+        CairoUtils.line_to_points(context, separator_spiral_points)
+
+        context.stroke()
+
+        '''
+
+        end_utc_plus = end_utc + datetime.timedelta(hours=24)
+
+        control_points = self.get_dt_control_points(start_utc, end_utc, hours=24)
+        control_points_ex = [start_utc] + control_points + [end_utc]
 
         for i in range(len(control_points_ex)-1):
 
@@ -331,66 +372,69 @@ class Timeline(object):
             t_from = self.timedelta_to_t(dt_from - start_utc)
             t_to = self.timedelta_to_t(dt_to - start_utc)
 
+            weekday = datetime.datetime.strftime(dt_from, "%A").lower()
+
             separator_spiral_points = self.get_spiral_points(spiral_params, t_from, t_to)
             CairoUtils.line_to_points(context, separator_spiral_points)
-
-            if (dt_from + (dt_to - dt_from) / 2).hour < 12:
-                stroke = self._config.primary_stroke
-            else:
-                stroke = self._config.secondary_stroke
-
-            CairoUtils.set_stroke_params(context, stroke)
+            stroke_params = self._config.stroke_fn(weekday)
+            print(stroke_params)
+            CairoUtils.set_stroke_params(context, stroke_params)
             context.stroke()
+            
+
+
+    def render_day_label(self, context, location, weekday, open_left, open_right):
+
+        with ContextRestorer(context):
+            day_label_width = self._config.day_labels.width
+            day_label_height = self._config.day_labels.height
+            day_label_radius = self._config.day_labels.radius
+
+            left = location[0] - day_label_width / 2
+            top = location[1] - day_label_height / 2
+
+            CairoUtils.line_to_rounded_rect(context, left, top,
+                                            day_label_width,
+                                            day_label_height,
+                                            day_label_radius,
+                                            open_left,
+                                            open_right)
+            CairoUtils.draw(context, self._config.day_labels[weekday].background)
+
+            text = weekday[0:3].upper()
+
+            CairoUtils.draw_text(context=context,
+                                 text=text,
+                                 text_location=location,
+                                 text_params=self._config.day_labels[
+                                     weekday].font,
+                                 angle=0 * math.pi,
+                                 centre_x=0,
+                                 centre_y=0)
+
+    def render_day_labels(self, context, start_utc, end_utc):
+
+        spiral_params = self.get_spiral_params(offset=0, now=start_utc)
 
         midnights_in_timeline = self.get_dt_control_points(start_utc, end_utc, 24)
 
-        day_label_margin_x = self._config.day_labels.margin_x
-        day_label_margin_y = self._config.day_labels.margin_y
-        day_label_height = self._config.day_labels.height
-
         for midnight in midnights_in_timeline:
-            next_midnight = midnight + datetime.timedelta(hours=24)
-            #print(midnight)
 
-            with ContextRestorer(context):
-                
-                p0 = self.get_spiral_point_from_timedelta(spiral_params, midnight - start_utc)
-                p1 = self.get_spiral_point_from_timedelta(spiral_params, next_midnight - start_utc)
+            if midnight < end_utc:
 
-                #point = self.get_spiral_point(spiral_params, t_to)
+                with ContextRestorer(context):
 
-                left = p0[0] + day_label_margin_x
-                top = p0[1] + day_label_margin_y
-                width = day_label_height
-                height = p1[1] - p0[1] - 2 * day_label_margin_y
+                    p0 = self.get_spiral_point_from_timedelta(spiral_params, midnight - start_utc)
 
-                CairoUtils.line_to_rounded_rect(context, left, top, width, height, 4)
+                    def render_label(text, params):
+                        p = (p0[0] + params.offset, p0[1])
+                        self.render_day_label(context, p, text, params.open_left, params.open_right)
 
-                #p0_ = (p0[0] + day_label_margin_x, p0[1] + day_label_margin_y)
-                #p1_ = (p1[0] + day_label_margin_x, p1[1] - day_label_margin_y)
+                    weekday_start = datetime.datetime.strftime(midnight, "%A").lower()
+                    weekday_end = datetime.datetime.strftime(midnight + datetime.timedelta(minutes=-1), "%A").lower()
 
-
-                #context.move_to(*p0_)
-                #context.line_to(*p1_)
-                #context.line_to(p1_[0] + day_label_height, p1_[1])
-                #context.line_to(p0_[0] + day_label_height, p0_[1])
-                #context.line_to(*p0_)
-
-                day_field = datetime.datetime.strftime(midnight, "%A").lower()
-                CairoUtils.draw(context, self._config.day_labels[day_field].background)
-
-                #print("left={} width={}".format(left, width))
-                #context.rotate(0.1 * math.pi)
-                text = self._config.day_labels.text_fn(midnight)
-
-                CairoUtils.draw_text(context=context,
-                                     text=text,
-                                     text_location=(left + width / 2, top + height / 2),
-                                     text_params=self._config.day_labels[day_field].font,
-                                     angle=1.5 * math.pi,
-                                     centre_x=0,
-                                     centre_y=0)
-
+                    render_label(weekday_start, self._config.day_labels['day_start_label'])
+                    render_label(weekday_end, self._config.day_labels['day_end_label'])
 
 
         """
@@ -444,6 +488,11 @@ class Timeline(object):
             i += 1
         """
 
+    def render_plugin_events(self, context, start_utc, end_utc):
+
+        thickness = self._config.thickness
+        spiral_params = self.get_spiral_params(offset=0, now=start_utc)
+
         context.set_source_rgba(1, 0, 0, 1)
         context.stroke()
 
@@ -451,7 +500,7 @@ class Timeline(object):
 
             assert (isinstance(p, plugins.plugin.Plugin))
 
-            plugin_spiral_params = self.get_spiral_params(offset=thickness/2, now=start_utc)
+            plugin_spiral_params = self.get_spiral_params(offset=0, now=start_utc)
 
             def spiral_point_generator(datetime):
                 point_timedelta = datetime - start_utc
@@ -611,6 +660,8 @@ class MainWindow(tkinter.Tk):
         self._clock.render(self.context, now)
         self._event_list.render(self.context)
         self._app_heading.render(self.context, now)
+        self._timeline.render_plugin_events(self.context, now, now + self._config.timespan)
+        self._timeline.render_day_labels(self.context, now, now + self._config.timespan)
 
         new_img = PIL.Image.frombuffer("RGBA", self.size,
                                    self.surface.get_data(),

@@ -7,29 +7,7 @@ import dotmap
 import common
 import plugins.googlecalendarplugin
 
-days_long = \
-{
-    0 : "Monday",
-    1 : "Tuesday",
-    2 : "Wednesday",
-    3 : "Thursday",
-    4 : "Friday",
-    5 : "Saturday",
-    6 : "Sunday"
-}
-
-days_short = \
-{
-    0 : "MON",
-    1 : "TUE",
-    2 : "WED",
-    3 : "THU",
-    4 : "FRI",
-    5 : "SAT",
-    6 : "SUN"
-}
-
-nr_suffix = \
+NR_SUFFIX = \
 {
     0 : "th",
     1 : "st",
@@ -43,9 +21,48 @@ nr_suffix = \
     9 : "th",
 }
 
+PALETTE = \
+{
+    'monday' : (0.60, 0.00, 0.00, 1),
+    'tuesday' : (0.60, 0.27, 0.00, 1),
+    'wednesday' : (0.66, 0.50, 0.01, 1),
+    'thursday' : (0.05, 0.54, 0.00, 1),
+    'friday' : (0.00, 0.51, 0.35, 1),
+    'saturday' : (0.00, 0.39, 0.51, 1),
+    'sunday' : (0.51, 0.00, 0.46, 1)
+}
+
+def DAY_LABEL_STYLE(day):
+    {
+        'background':
+            {
+
+                'fill':
+                    {
+                        'colour': PALETTE[day]
+                    },
+                'stroke':
+                    {
+                        'colour': (1, 1, 1, 1),
+                        'line_width': 1.5,
+                        'dash_style': ([], 0),
+                        'line_cap': cairo.constants.LINE_CAP_BUTT
+                    }
+            },
+
+        'font':
+            {
+                'colour': (1, 1, 1, 1),
+                'font_size': 8,
+                'font_face': (
+                "FreeMono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD),
+                'height': 30
+            }
+    }
+
 cfg = dotmap.DotMap(
 {
-    'timespan' : datetime.timedelta(hours=24*4),
+    'timespan' : datetime.timedelta(hours=24*6),
 
     'window' :
     {
@@ -53,6 +70,8 @@ cfg = dotmap.DotMap(
         'height' : 480,
         'background_colour' : (0, 0, 0, 1)
     },
+
+    'palette' : PALETTE,
 
     'app_heading' :
     {
@@ -71,7 +90,7 @@ cfg = dotmap.DotMap(
 
         'stroke' : None,
 
-        'text_fn' : lambda : datetime.datetime.now().strftime("  %A, %d{} of %B %Y").format(nr_suffix[datetime.datetime.now().day%10]),
+        'text_fn' : lambda : datetime.datetime.now().strftime("  %A, %d{} of %B %Y").format(NR_SUFFIX[datetime.datetime.now().day%10]),
 
         'font' :
         {
@@ -177,28 +196,33 @@ cfg = dotmap.DotMap(
 
         'thickness' : 15,
 
-        'primary_stroke':
+        'stroke_fn': lambda weekday: dotmap.DotMap(
         {
-            'colour': (1, 1, 1, 1),
+            'colour': PALETTE[weekday], # not used
             'line_width': 1.5,
             'dash_style': ([], 0),
             'line_cap': cairo.constants.LINE_CAP_BUTT
-        },
-
-        'secondary_stroke':
-        {
-            'colour': (1, 1, 1, 1),
-            'line_width': 1.5,
-            'dash_style': ([1,8,1,8], 0),
-            'line_cap': cairo.constants.LINE_CAP_BUTT
-        },
+        }),
 
         'day_labels' :
         {
-            'height' : 14,
-            'margin_x' : 1,
-            'margin_y' : 3,
-            'text_fn' : (lambda dt : days_short[dt.weekday()]),
+            'width' : 24,
+            'height' : 12,
+            'radius' : 3,
+
+            'day_start_label' :
+            {
+                'offset' : 13,
+                'open_left' : False,
+                'open_right' : True,
+            },
+
+            'day_end_label' :
+            {
+                'offset' : -13,
+                'open_left' : True,
+                'open_right' : False
+            },
 
             'monday' :
             {
@@ -207,7 +231,7 @@ cfg = dotmap.DotMap(
 
                     'fill' :
                     {
-                        'colour' : (0.60, 0.00, 0.00, 1)
+                        'colour' : PALETTE['monday']
                     },
                     'stroke' :
                     {
@@ -233,7 +257,7 @@ cfg = dotmap.DotMap(
 
                     'fill' :
                     {
-                        'colour' : (0.60, 0.27, 0.00, 1)
+                        'colour' : PALETTE['tuesday']
                     },
                     'stroke' :
                     {
@@ -259,7 +283,7 @@ cfg = dotmap.DotMap(
 
                     'fill' :
                     {
-                        'colour' : (0.66, 0.50, 0.01, 1)
+                        'colour' : PALETTE['wednesday']
                     },
                     'stroke' :
                     {
@@ -285,7 +309,7 @@ cfg = dotmap.DotMap(
 
                     'fill' :
                     {
-                        'colour' : (0.05, 0.54, 0.00, 1)
+                        'colour' : PALETTE['thursday']
                     },
                     'stroke' :
                     {
@@ -311,7 +335,7 @@ cfg = dotmap.DotMap(
 
                     'fill' :
                     {
-                        'colour' : (0.00, 0.51, 0.35, 1)
+                        'colour' : PALETTE['friday']
                     },
                     'stroke' :
                     {
@@ -337,7 +361,7 @@ cfg = dotmap.DotMap(
 
                     'fill' :
                     {
-                        'colour' : (0.00, 0.39, 0.51, 1)
+                        'colour' : PALETTE['saturday']
                     },
                     'stroke' :
                     {
@@ -389,7 +413,7 @@ cfg = dotmap.DotMap(
     {
         'today_header_text_fn' : (lambda : "Today"),
         'tomorrow_header_text_fn' : (lambda : "Tomorrow"),
-        'datetime_header_text_fn' : (lambda dt : days_long[dt.weekday()]),
+        'datetime_header_text_fn' : (lambda dt : datetime.datetime.strftime(dt, "%A")),
 
         'bounding_box' :
         {
