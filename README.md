@@ -1,6 +1,10 @@
 mxklabs - Raspberry Pi Touchscreen Application
 ==============================================
 
+# Notice
+
+**NOTE**: *Please note this project is not finished -- it is a work in progress!*
+
 # Installation
 
 ## Hardware & setup
