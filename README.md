@@ -3,9 +3,11 @@ mxklabs - Raspberry Pi Calendar
 
 # Introduction
 
-The aim of this project is to turn a Raspberry Pi with a touchscreen into a calendar display, linking it to, e.g., Google Calendar.
+The aim of this project is to turn a Raspberry Pi with a touchscreen into a combined clock/calendar. The calendar is linked to Google Calendar. The display shows events on a spiral with similar to the hour hand of a clock (i.e 00:00 and 12:00 are on top, 03:00 and 15:00 on the right, etc.). As time progresses events move closer to the centre of the spiral, with the very centre representing the here and now. The spiral updates in real time.
 
-**NOTE**: *This project has been abandoned due to the purchase of a smart fridge. I've left the repository here in case it is useful to anybody. It happily downloads events from Google Calendar and displays it using Cairo. Note that whilst mostly functional this code is not production quality.*
+![Screenshot](assets/screenshot.png)
+
+**NOTE**: *This project has been abandoned due to the purchase of a smart fridge. I've left the repository here in case it is useful to anybody. It happily downloads events from Google Calendar and displays it using Cairo. Note that whilst partly functional this code is not production quality.*
 
 # Installation
 
@@ -47,7 +49,7 @@ with some additional dependencies:
    sudo python3 -m pip install --upgrade dotmap
    ```
 
-* Install [Cairo](https://cairographics.org/):
+* Install Cairo:
 
    ```
    sudo python3 -m pip install --upgrade cairocffi
