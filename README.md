@@ -66,17 +66,21 @@ with some additional dependencies:
    sudo apt-get install gir1.2-webkit-3.07
    ```
 
-## Installing this software (mxklabs-pi)
+## Installing this software (mxklabs-pi-calendar)
 
 The easiest way to install our this repository is to use git to clone the source
 code directly from the github repository:
 
- pi@raspberrypi:~$ git clone https://github.com/mxklabs/mxklabs-pi.git
+```
+git clone https://github.com/mxklabs/mxklabs-pi-calendar.git
+```
 
 This puts the source code in `/home/pi/mxklabs-pi`. Now, you should be able to
 manually start the application as follows:
 
- pi@raspberrypi:~$ python3 mxklabs-pi/main.py
+```
+python3 mxklabs-pi/main.py
+```
 
 ## Configuring mxklabs-pi software
 
