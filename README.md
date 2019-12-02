@@ -1,5 +1,5 @@
-mxklabs - Raspberry Pi Touchscreen Application
-==============================================
+mxklabs - Raspberry Pi Calendar
+===============================
 
 # Introduction
 
