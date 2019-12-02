@@ -75,17 +75,17 @@ code directly from the github repository:
 git clone https://github.com/mxklabs/mxklabs-pi-calendar.git
 ```
 
-This puts the source code in `/home/pi/mxklabs-pi`. Now, you should be able to
+This puts the source code in `/home/pi/mxklabs-pi-calendar`. Now, you should be able to
 manually start the application as follows:
 
 ```
-python3 mxklabs-pi/main.py
+python3 mxklabs-pi-calendar/main.py
 ```
 
 ## Configuring mxklabs-pi software
 
 If you're planning to use the Google Calendar API feature then you'll need to
-download a `client_secret.json` to `/home/pi/mxklabs-pi/credentials/google-api/client_secret.json`
+download a `client_secret.json` to `/home/pi/mxklabs-pi-calendar/credentials/google-api/client_secret.json`
 (follow [this guide](https://developers.google.com/google-apps/calendar/quickstart/python)).
 Note that this application was developed to stay within Google's free tier
 quotas; there's no need to add a billing account.
@@ -93,7 +93,7 @@ quotas; there's no need to add a billing account.
 ## Post-Installation Tweaks
 
 * To turn your screen upside down add the line `rotate_lcd=2` to the top of `/boot/config.txt`.
-* To auto-start the application on startup add `@/usr/bin/python3 /home/pi/mxklabs-pi/main.py`
+* To auto-start the application on startup add `@/usr/bin/python3 /home/pi/mxklabs-pi-calendar/main.py`
 to the bottom of `/home/pi/.config/lxsession/LXDE-pi/autostart`.
 * To set the brightness of the display set `/sys/class/backlight/rpi_backlight/brightness`
 to a number between `0` (dark) and `255` (bright).
